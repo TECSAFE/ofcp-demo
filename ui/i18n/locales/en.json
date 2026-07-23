@@ -1,0 +1,112 @@
+{
+  "common": {
+    "outOfStock": "Out of stock"
+  },
+  "nav": {
+    "products": "Products",
+    "cart": "Cart",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "logoAlt": "{shop} logo"
+  },
+  "footer": {
+    "tagline": "TECSAFE OFCP demo shop — not a real store",
+    "shopAppearance": "Shop appearance",
+    "privacySettings": "Privacy settings"
+  },
+  "login": {
+    "title": "Login",
+    "email": "Email",
+    "password": "Password",
+    "error": "Login failed. Check your email and password.",
+    "accountsDeletedHint": "Cant login anymore? Accounts will regularly be deleted from the demo shop. Create a new one if needed.",
+    "submit": "Login",
+    "noAccount": "No account yet?",
+    "registerLink": "Register"
+  },
+  "register": {
+    "title": "Register",
+    "email": "Email",
+    "password": "Password (min. 6 characters)",
+    "privacyHint": "Your privacy choice from this browser will be saved to your new account.",
+    "accountsDeletedHint": "Accounts will regularly be deleted from the demo shop.",
+    "error": "Registration failed. The email may already be registered (password: min. 6 characters).",
+    "randomPrompt": "Want a random account? Click here:",
+    "generateButton": "Generate random email and password",
+    "randomGenerated": "Random account generated! The email is also the password. It has been copied to your clipboard.",
+    "submit": "Register"
+  },
+  "cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty.",
+    "itemMeta": "{article} · Quantity: {qty}",
+    "configuration": "TECSAFE configuration: {id}",
+    "clear": "Clear cart",
+    "total": "Total: {amount} €"
+  },
+  "products": {
+    "title": "Products",
+    "dummyItemsExplainer": "Every shop that integrates OFCP provides 250 dummy items (or one item with 250 variants, 1–250 €) that TECSAFE can address by itemId. They are normally hidden from the shop's search and product overview. This demo has no installation process, so this button fakes the injection into the normal product list.",
+    "injectDummyItems": "Inject OFCP dummy items",
+    "hideDummyItems": "Hide OFCP dummy items"
+  },
+  "product": {
+    "meta": "Article no. {article} · EAN {ean}",
+    "inclVat": "incl. VAT",
+    "quantity": "Quantity",
+    "addToCart": "Add to cart",
+    "addedToCart": "Added to cart!",
+    "notFound": "Product not found.",
+    "configuratorTitle": "Configure your foam inlay",
+    "configuratorConsentRequired": "The product configurator requires data exchange with TECSAFE.",
+    "openPrivacySettings": "Open privacy settings",
+    "debugWidgetActive": "Debug widget active — the product configurator is replaced by the TECSAFE debug console."
+  },
+  "consent": {
+    "title": "Privacy settings",
+    "intro": "The product configurator on this site is provided by TECSAFE. To use it, product and session data is exchanged with TECSAFE and stored in your browser. Optionally you can allow usage tracking. You can change your choice at any time via \"Privacy settings\" in the footer.",
+    "allowDataExchange": "Allow data exchange with TECSAFE (required for the configurator)",
+    "allowTracking": "Allow usage tracking (optional)",
+    "acceptAll": "Accept all",
+    "saveSelection": "Save selection",
+    "declineAll": "Decline all"
+  },
+  "whitelabel": {
+    "title": "Shop appearance",
+    "intro": "Whitelabel this demo shop. Your appearance is stored in this browser (local storage and IndexedDB) — nothing is uploaded unless you explicitly save it on the server below.",
+    "shopName": "Shop name",
+    "logoLabel": "Logo (max 2 MB)",
+    "logoPreviewAlt": "Logo preview",
+    "removeLogo": "Remove",
+    "logoError": {
+      "notImage": "The logo must be an image file.",
+      "tooLarge": "The logo is too large — the limit is 2 MB."
+    },
+    "surfaceColor": "Surface color (header/footer)",
+    "primaryColor": "Primary color (buttons)",
+    "debugWidget": "Enable debug widget (replaces the product configurator)",
+    "save": "Save",
+    "reset": "Reset to defaults",
+    "cancel": "Cancel",
+    "share": {
+      "title": "Save on server & share",
+      "intro": "With the shop owner's secret, the appearance shown above can be stored on the server for a limited time. Anyone opening the link gets it applied automatically.",
+      "secret": "Secret",
+      "duration": "Valid for (days, 1–30)",
+      "submit": "Create link",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "expires": "The link expires on {date}.",
+      "error": {
+        "wrongSecret": "The secret is wrong.",
+        "disabled": "Sharing is not enabled on this server.",
+        "failed": "Saving on the server failed. Please try again."
+      }
+    }
+  },
+  "language": {
+    "de": "Deutsch",
+    "en": "English"
+  }
+}

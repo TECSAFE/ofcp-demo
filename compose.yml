@@ -1,0 +1,24 @@
+services:
+  shop:
+    image: ghcr.io/tecsafe/ofcp-demo:latest
+    ports:
+      - "8080:80"
+    environment:
+      PORT: "4000"
+      NITRO_PORT: "80"
+      DATA_DIR: /data
+      UI_ORIGIN: http://localhost:8080
+      API_PROXY_TARGET: http://127.0.0.1:4000
+      NUXT_PUBLIC_API_BASE: /api
+      GUEST_SESSION_TTL_DAYS: 7
+      SESSION_TTL_DAYS: 2
+      USER_TTL_DAYS: 7
+      OFCP_GATEWAY_URL: ${OFCP_GATEWAY_URL:https://ofcp-api-gateway.staging.tecsafe.de}
+      NUXT_PUBLIC_WIDGET_BASE_URL: ${NUXT_PUBLIC_WIDGET_BASE_URL:https://app-ui.tecsafe.de}
+      OFCP_SALESCHANNEL_API_KEY: ${OFCP_SALESCHANNEL_API_KEY}
+      WHITELABEL_SHARE_SECRET: ${WHITELABEL_SHARE_SECRET:-}
+    volumes:
+      - data:/data
+
+volumes:
+  data:

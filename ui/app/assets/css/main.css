@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+:root {
+  /* Whitelabel variables — overridden at runtime by useWhitelabel(). */
+  --wl-primary: #0f172a; /* slate-900 */
+  --wl-surface: #cbd5e1; /* slate-300 */
+}

@@ -1,0 +1,43 @@
+import { DUMMY_ITEM_COUNT } from './dummy-items';
+import { DEMO_PRODUCTS } from './products.data';
+import { ProductsService } from './products.service';
+
+describe('ProductsService', () => {
+  const service = new ProductsService();
+
+  it('lists at least three demo products', () => {
+    expect(service.list().length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('finds a product by article number', () => {
+    const product = service.byArticleNumber('5054598');
+    expect(product?.name).toBeTruthy();
+    expect(product?.ean).toBeTruthy();
+  });
+
+  it('returns null for unknown article numbers', () => {
+    expect(service.byArticleNumber('NOPE')).toBeNull();
+  });
+
+  it('hides dummy items from the default listing', () => {
+    const articleNumbers = service.list().map((p) => p.articleNumber);
+    expect(articleNumbers.some((a) => a.startsWith('OFCP-DUMMY-'))).toBe(
+      false,
+    );
+  });
+
+  it('injects the dummy items when asked to', () => {
+    const products = service.list({ includeDummyItems: true });
+    expect(products).toHaveLength(DEMO_PRODUCTS.length + DUMMY_ITEM_COUNT);
+    // Regular catalog first, dummy items appended.
+    expect(products[DEMO_PRODUCTS.length].articleNumber).toBe(
+      'OFCP-DUMMY-001',
+    );
+  });
+
+  it('always resolves dummy items by article number', () => {
+    const product = service.byArticleNumber('OFCP-DUMMY-042');
+    expect(product?.price).toBe(42);
+    expect(product?.stock).toBeGreaterThan(0);
+  });
+});

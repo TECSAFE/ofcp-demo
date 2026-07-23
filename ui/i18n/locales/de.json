@@ -1,0 +1,112 @@
+{
+  "common": {
+    "outOfStock": "Nicht auf Lager"
+  },
+  "nav": {
+    "products": "Produkte",
+    "cart": "Warenkorb",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "logout": "Abmelden",
+    "logoAlt": "{shop} Logo"
+  },
+  "footer": {
+    "tagline": "TECSAFE OFCP Demo-Shop — kein echter Laden",
+    "shopAppearance": "Shop-Darstellung",
+    "privacySettings": "Datenschutzeinstellungen"
+  },
+  "login": {
+    "title": "Anmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "error": "Anmeldung fehlgeschlagen. Bitte E-Mail und Passwort prüfen.",
+    "accountsDeletedHint": "Anmeldung nicht mehr möglich? Konten im Demo-Shop werden regelmäßig gelöscht. Bei Bedarf einfach ein neues anlegen.",
+    "submit": "Anmelden",
+    "noAccount": "Noch kein Konto?",
+    "registerLink": "Registrieren"
+  },
+  "register": {
+    "title": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort (mind. 6 Zeichen)",
+    "privacyHint": "Deine Datenschutzauswahl aus diesem Browser wird in deinem neuen Konto gespeichert.",
+    "accountsDeletedHint": "Konten im Demo-Shop werden regelmäßig gelöscht.",
+    "error": "Registrierung fehlgeschlagen. Die E-Mail ist möglicherweise bereits registriert (Passwort: mind. 6 Zeichen).",
+    "randomPrompt": "Zufälliges Konto gewünscht? Hier klicken:",
+    "generateButton": "Zufällige E-Mail und Passwort erzeugen",
+    "randomGenerated": "Zufälliges Konto erstellt! Die E-Mail ist auch das Passwort. Sie wurde in die Zwischenablage kopiert.",
+    "submit": "Registrieren"
+  },
+  "cart": {
+    "title": "Warenkorb",
+    "empty": "Dein Warenkorb ist leer.",
+    "itemMeta": "{article} · Menge: {qty}",
+    "configuration": "TECSAFE-Konfiguration: {id}",
+    "clear": "Warenkorb leeren",
+    "total": "Summe: {amount} €"
+  },
+  "products": {
+    "title": "Produkte",
+    "dummyItemsExplainer": "Jeder Shop, der OFCP integriert, stellt 250 Dummy-Artikel bereit (oder einen Artikel mit 250 Varianten, 1–250 €), die TECSAFE über eine itemId ansprechen kann. Sie sind normalerweise in Suche und Produktübersicht des Shops nicht sichtbar. Diese Demo hat keinen Installationsprozess, daher simuliert dieser Button die Injektion in die normale Produktliste.",
+    "injectDummyItems": "OFCP-Dummy-Artikel einfügen",
+    "hideDummyItems": "OFCP-Dummy-Artikel ausblenden"
+  },
+  "product": {
+    "meta": "Artikel-Nr. {article} · EAN {ean}",
+    "inclVat": "inkl. MwSt.",
+    "quantity": "Menge",
+    "addToCart": "In den Warenkorb",
+    "addedToCart": "Zum Warenkorb hinzugefügt!",
+    "notFound": "Produkt nicht gefunden.",
+    "configuratorTitle": "Konfiguriere deine Schaumstoffeinlage",
+    "configuratorConsentRequired": "Der Produktkonfigurator erfordert einen Datenaustausch mit TECSAFE.",
+    "openPrivacySettings": "Datenschutzeinstellungen öffnen",
+    "debugWidgetActive": "Debug-Widget aktiv — der Produktkonfigurator wird durch die TECSAFE-Debug-Konsole ersetzt."
+  },
+  "consent": {
+    "title": "Datenschutzeinstellungen",
+    "intro": "Der Produktkonfigurator auf dieser Seite wird von TECSAFE bereitgestellt. Zur Nutzung werden Produkt- und Sitzungsdaten mit TECSAFE ausgetauscht und in deinem Browser gespeichert. Optional kannst du Nutzungs-Tracking erlauben. Du kannst deine Auswahl jederzeit über „Datenschutzeinstellungen“ im Footer ändern.",
+    "allowDataExchange": "Datenaustausch mit TECSAFE erlauben (für den Konfigurator erforderlich)",
+    "allowTracking": "Nutzungs-Tracking erlauben (optional)",
+    "acceptAll": "Alle akzeptieren",
+    "saveSelection": "Auswahl speichern",
+    "declineAll": "Alle ablehnen"
+  },
+  "whitelabel": {
+    "title": "Shop-Darstellung",
+    "intro": "Gestalte diesen Demo-Shop im Whitelabel. Die Darstellung wird in diesem Browser gespeichert (Local Storage und IndexedDB) — nichts wird hochgeladen, außer du speicherst sie unten ausdrücklich auf dem Server.",
+    "shopName": "Shop-Name",
+    "logoLabel": "Logo (max. 2 MB)",
+    "logoPreviewAlt": "Logo-Vorschau",
+    "removeLogo": "Entfernen",
+    "logoError": {
+      "notImage": "Das Logo muss eine Bilddatei sein.",
+      "tooLarge": "Das Logo ist zu groß — das Limit liegt bei 2 MB."
+    },
+    "surfaceColor": "Flächenfarbe (Kopf-/Fußzeile)",
+    "primaryColor": "Primärfarbe (Schaltflächen)",
+    "debugWidget": "Debug-Widget aktivieren (ersetzt den Produktkonfigurator)",
+    "save": "Speichern",
+    "reset": "Auf Standard zurücksetzen",
+    "cancel": "Abbrechen",
+    "share": {
+      "title": "Auf dem Server speichern & teilen",
+      "intro": "Mit dem Geheimnis des Shop-Betreibers kann die oben eingestellte Darstellung befristet auf dem Server gespeichert werden. Wer den Link öffnet, bekommt sie automatisch angewendet.",
+      "secret": "Geheimnis",
+      "duration": "Gültig für (Tage, 1–30)",
+      "submit": "Link erstellen",
+      "copy": "Kopieren",
+      "copied": "Kopiert!",
+      "expires": "Der Link läuft am {date} ab.",
+      "error": {
+        "wrongSecret": "Das Geheimnis ist falsch.",
+        "disabled": "Das Teilen ist auf diesem Server nicht aktiviert.",
+        "failed": "Das Speichern auf dem Server ist fehlgeschlagen. Bitte erneut versuchen."
+      }
+    }
+  },
+  "language": {
+    "de": "Deutsch",
+    "en": "English"
+  }
+}

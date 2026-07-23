@@ -1,0 +1,16 @@
+{
+  "name": "ofcp-demo",
+  "version": "0.0.1",
+  "private": true,
+  "description": "OFCP demo shop — root dev orchestration for the NestJS API (:4000) and Nuxt UI (:3000).",
+  "scripts": {
+    "install:all": "pnpm --dir api install && pnpm --dir ui install",
+    "dev": "concurrently --kill-others-on-fail --names api,ui --prefix-colors blue,green \"pnpm --dir api start:dev\" \"pnpm --dir ui dev --host\"",
+    "build": "pnpm --dir api build && pnpm --dir ui build",
+    "test": "concurrently --names api,ui --prefix-colors blue,green \"pnpm --dir api test\" \"pnpm --dir ui test\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "packageManager": "pnpm@11.15.1+sha512.81350b07e53c9538a02f1f2303b4290fa2d7be04e56e2a970c4cc4b417dc761de196edabd49d55c7dc9580db81007c44143e4e3d7e462b3000d23c255122d065"
+}
