@@ -5,7 +5,7 @@ services:
       - "8080:80"
     environment:
       OFCP_GATEWAY_URL: ${OFCP_GATEWAY_URL:-https://ofcp-api-gateway.staging.tecsafe.de}
-      NUXT_PUBLIC_WIDGET_BASE_URL: ${NUXT_PUBLIC_WIDGET_BASE_URL:-https://app-ui.tecsafe.de}
+      NUXT_PUBLIC_WIDGET_BASE_URL: ${NUXT_PUBLIC_WIDGET_BASE_URL:-https://app-ui.tecsafe.de/iframe}
       OFCP_SALESCHANNEL_API_KEY: ${OFCP_SALESCHANNEL_API_KEY:-tds_sc_eshop_dev_key}
       WHITELABEL_SHARE_SECRET: ${WHITELABEL_SHARE_SECRET:-}
     volumes:
