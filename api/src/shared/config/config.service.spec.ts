@@ -2,7 +2,6 @@ import { ConfigService } from './config.service';
 
 const KEYS = [
   'PORT',
-  'UI_ORIGIN',
   'DATA_DIR',
   'OFCP_GATEWAY_URL',
   'OFCP_SALESCHANNEL_API_KEY',
@@ -30,17 +29,17 @@ describe('ConfigService', () => {
   });
 
   it('falls back to the default when a required string is unset', () => {
-    expect(new ConfigService().UI_ORIGIN).toBe('http://localhost:3000');
+    expect(new ConfigService().DATA_DIR).toBe('./data');
   });
 
   it('treats an empty string as missing', () => {
-    process.env.UI_ORIGIN = '';
-    expect(() => new ConfigService().UI_ORIGIN).toThrow('UI_ORIGIN');
+    process.env.DATA_DIR = '';
+    expect(() => new ConfigService().DATA_DIR).toThrow('DATA_DIR');
   });
 
   it('returns required strings verbatim', () => {
-    process.env.UI_ORIGIN = 'http://localhost:3000';
-    expect(new ConfigService().UI_ORIGIN).toBe('http://localhost:3000');
+    process.env.DATA_DIR = '/srv/ofcp-demo';
+    expect(new ConfigService().DATA_DIR).toBe('/srv/ofcp-demo');
   });
 
   it('strips trailing slashes from the gateway URL', () => {

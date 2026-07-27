@@ -111,6 +111,8 @@ describe('TecsafeService', () => {
       .mockResolvedValueOnce({
         ok: false,
         status: 401,
+        // The error path logs the raw body, so the double needs text() too.
+        text: () => Promise.resolve('unauthorized'),
         json: () => Promise.resolve({}),
       });
 

@@ -58,9 +58,12 @@ export class ConfigService {
     return this.requirePositiveNumber('USER_TTL_DAYS', '7');
   }
 
-  /** Optional by design: /tecsafe endpoints answer 503 until this is set. */
-  get OFCP_SALESCHANNEL_API_KEY(): string {
-    return this.require('OFCP_SALESCHANNEL_API_KEY');
+  /**
+   * Absent-tolerant at request time so /tecsafe endpoints answer 503 instead
+   * of crashing; validate() still requires it, so a real boot fails fast.
+   */
+  get OFCP_SALESCHANNEL_API_KEY(): string | undefined {
+    return this.optional('OFCP_SALESCHANNEL_API_KEY');
   }
 
   /** Optional by design: POST /whitelabel-shares answers 503 until this is set. */
@@ -76,6 +79,7 @@ export class ConfigService {
     void this.GUEST_SESSION_TTL_DAYS;
     void this.SESSION_TTL_DAYS;
     void this.USER_TTL_DAYS;
-    void this.OFCP_SALESCHANNEL_API_KEY;
+    // Not a getter read: the getter tolerates absence, boot does not.
+    this.require('OFCP_SALESCHANNEL_API_KEY');
   }
 }
