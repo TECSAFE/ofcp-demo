@@ -1,0 +1,6 @@
+services:
+  shop:
+    image: ghcr.io/tecsafe/ofcp-demo:dev
+    build:
+      context: .
+      dockerfile: Dockerfile

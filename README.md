@@ -153,7 +153,8 @@ protocol itself:
 - Node 22 + pnpm
 - A TECSAFE saleschannel API key (created in the cockpit's salesChannels
   settings; dev seed key of a local ofcp stack: `tds_sc_eshop_dev_key`)
-- A running app-ui to serve the widget iframes (see below)
+- Optional: a local app-ui instance for local iframe testing (see below).
+  By default, the demo uses `https://app-ui.tecsafe.de/iframe`.
 
 ## Running (one command)
 
@@ -161,37 +162,48 @@ From the repo root, start the API (:4000) and shop UI (:3000) together:
 
     pnpm install        # root: installs `concurrently`
     pnpm install:all    # installs api/ and ui/ dependencies
-    cp api/.env.example api/.env
-    cp ui/.env.example ui/.env
-    OFCP_SALESCHANNEL_API_KEY=<key> pnpm dev
+  pnpm dev
 
 `pnpm dev` runs `api` (`start:dev`, watch mode) and `ui` (`nuxt dev`) under
 `concurrently` with prefixed, colour-coded logs; Ctrl-C stops both. The API
 listens on `:4000` and the UI on `:3000` — no port clash. You still need the
-widget iframe host (`app-ui`) on `:3002` separately (see below).
+widget iframe host only if you want to test against a local app-ui instance
+on `:3002` (see below).
+
+There are no committed `.env.example` files anymore. Use environment
+variables directly (inline, exported, direnv, or your own untracked `.env`
+files).
+
+Root `pnpm dev` defaults:
+
+- `OFCP_SALESCHANNEL_API_KEY=tds_sc_eshop_dev_key`
+- `OFCP_GATEWAY_URL=https://ofcp-api-gateway.staging.tecsafe.de`
+
+Example with explicit overrides:
+
+    OFCP_SALESCHANNEL_API_KEY=<key> OFCP_GATEWAY_URL=<gateway-url> pnpm dev
 
 ## Running (three terminals)
 
     # 1 — API on :4000
     cd api && pnpm install
-    cp .env.example .env
     OFCP_SALESCHANNEL_API_KEY=<key> pnpm start:dev
     # optional: OFCP_GATEWAY_URL=http://localhost:8080 for a local ofcp stack
-    # (default gateway: https://ofcp-api-gateway.staging.tecsafe.de)
+    # (api-only default gateway without override: http://localhost:4000)
 
-    # 2 — app-ui (widget iframes) on :3002
+    # 2 — optional: local app-ui (widget iframes) on :3002
     cd ../app-ui/nuxt && pnpm install && pnpm dev --port 3002
 
     # 3 — shop on :3000
     cd ui && pnpm install
-    cp .env.example .env
     pnpm dev
+    # optional for local app-ui:
+    # NUXT_PUBLIC_WIDGET_BASE_URL=http://localhost:3002/iframe pnpm dev
 
 Open http://localhost:3000.
 
 ## Running (Docker)
 
-    cp .env.example .env    # fill in OFCP_SALESCHANNEL_API_KEY etc.
     docker compose up --build
 
 One container runs both processes: the Nuxt UI (port 80, published as
@@ -199,11 +211,25 @@ http://localhost:8080) and the NestJS API (port 4000, container-internal).
 The UI's Nitro server proxies `/api/**` to the API, so nothing else is
 exposed. Data persists in the `shop-data` volume.
 
-Environment variables (all required unless marked optional, no code defaults —
-see api/.env.example): PORT, UI_ORIGIN, DATA_DIR, OFCP_GATEWAY_URL,
-OFCP_SALESCHANNEL_API_KEY (optional), GUEST_SESSION_TTL_DAYS, SESSION_TTL_DAYS,
-USER_TTL_DAYS, WHITELABEL_SHARE_SECRET (optional). NUXT_PUBLIC_API_BASE,
-NUXT_PUBLIC_WIDGET_BASE_URL, API_PROXY_TARGET (ui, see ui/.env.example).
+Environment variables are now default-driven (no committed `.env.example`
+templates):
+
+- Compose defaults (`compose.yml`):
+  `OFCP_GATEWAY_URL=https://ofcp-api-gateway.staging.tecsafe.de`,
+  `NUXT_PUBLIC_WIDGET_BASE_URL=https://app-ui.tecsafe.de`,
+  `OFCP_SALESCHANNEL_API_KEY=tds_sc_eshop_dev_key`,
+  `WHITELABEL_SHARE_SECRET=` (empty = sharing disabled).
+- API code defaults (`ConfigService`) for standalone API runs:
+  `PORT=4000`, `DATA_DIR=./data`, `OFCP_GATEWAY_URL=http://localhost:4000`,
+  `GUEST_SESSION_TTL_DAYS=1`, `SESSION_TTL_DAYS=2`, `USER_TTL_DAYS=7`.
+- API required without a code default:
+  `OFCP_SALESCHANNEL_API_KEY` (the API fails at boot if missing when run
+  directly without the root/compose defaults).
+- UI/runtime defaults:
+  `NUXT_PUBLIC_API_BASE=/api`,
+  `NUXT_PUBLIC_WIDGET_BASE_URL=https://app-ui.tecsafe.de/iframe`,
+  `API_PROXY_TARGET=http://localhost:4000` (dev server) /
+  `http://127.0.0.1:4000` (Docker image).
 Runtime data lives in
 `api/data/*.json` — delete the folder to reset all users, sessions and carts.
 

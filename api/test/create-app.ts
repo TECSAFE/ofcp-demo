@@ -11,8 +11,6 @@ export async function createTestApp(
   overrides?: (builder: TestingModuleBuilder) => TestingModuleBuilder,
 ): Promise<INestApplication<App>> {
   process.env.DATA_DIR = await mkdtemp(join(tmpdir(), 'ofcp-demo-e2e-'));
-  process.env.PORT ??= '4000';
-  process.env.UI_ORIGIN ??= 'http://localhost:3000';
   process.env.OFCP_GATEWAY_URL ??= 'https://gateway.test';
   process.env.GUEST_SESSION_TTL_DAYS ??= '7';
   process.env.SESSION_TTL_DAYS ??= '30';

@@ -5,7 +5,7 @@
   "description": "OFCP demo shop — root dev orchestration for the NestJS API (:4000) and Nuxt UI (:3000).",
   "scripts": {
     "install:all": "pnpm --dir api install && pnpm --dir ui install",
-    "dev": "concurrently --kill-others-on-fail --names api,ui --prefix-colors blue,green \"pnpm --dir api start:dev\" \"pnpm --dir ui dev --host\"",
+    "dev": "OFCP_SALESCHANNEL_API_KEY=${OFCP_SALESCHANNEL_API_KEY:-tds_sc_eshop_dev_key} OFCP_GATEWAY_URL=${OFCP_GATEWAY_URL:-https://ofcp-api-gateway.staging.tecsafe.de} concurrently --kill-others-on-fail --names api,ui --prefix-colors blue,green \"pnpm --dir api start:dev\" \"pnpm --dir ui dev --host\"",
     "build": "pnpm --dir api build && pnpm --dir ui build",
     "test": "concurrently --names api,ui --prefix-colors blue,green \"pnpm --dir api test\" \"pnpm --dir ui test\""
   },

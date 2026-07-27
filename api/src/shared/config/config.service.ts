@@ -35,13 +35,6 @@ export class ConfigService {
     return this.requirePositiveNumber('PORT', '4000');
   }
 
-  get UI_ORIGIN(): string {
-    return this.require('UI_ORIGIN', 'http://localhost:3000').replace(
-      /\/+$/,
-      '',
-    );
-  }
-
   get DATA_DIR(): string {
     return this.require('DATA_DIR', './data');
   }
@@ -78,7 +71,6 @@ export class ConfigService {
   /** Touch every required getter so a bad deployment fails at boot. */
   validate(): void {
     void this.PORT;
-    void this.UI_ORIGIN;
     void this.DATA_DIR;
     void this.OFCP_GATEWAY_URL;
     void this.GUEST_SESSION_TTL_DAYS;

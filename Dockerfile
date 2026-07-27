@@ -24,6 +24,13 @@ COPY --from=api-build /build/dist ./api/dist
 COPY --from=api-build /build/node_modules ./api/node_modules
 COPY --from=api-build /build/package.json ./api/package.json
 # Nitro output is self-contained (bundled deps) — no ui node_modules needed.
+
+ENV PORT=4000
+ENV NITRO_PORT=80
+ENV DATA_DIR=/data
+ENV API_PROXY_TARGET=http://127.0.0.1:4000
+ENV NUXT_PUBLIC_API_BASE=/api
+
 COPY --from=ui-build /build/.output ./ui
 COPY docker/start.sh ./start.sh
 EXPOSE 80
