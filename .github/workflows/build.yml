@@ -86,7 +86,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: true
           provenance: false
-          tags: ghcr.io/${{ github.repository }}:latest-${{ matrix.arch }}
+          tags: ghcr.io/tecsafe/ofcp-demo:latest-${{ matrix.arch }}
           cache-from: type=gha,scope=ofcp-demo-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=ofcp-demo-${{ matrix.arch }}
 
@@ -108,8 +108,8 @@ jobs:
       - name: Create multi-arch manifest
         run: |
           docker buildx imagetools create \
-            --tag ghcr.io/${{ github.repository }}:latest \
-            ghcr.io/${{ github.repository }}:latest-amd64 \
-            ghcr.io/${{ github.repository }}:latest-arm64
+            --tag ghcr.io/tecsafe/ofcp-demo:latest \
+            ghcr.io/tecsafe/ofcp-demo:latest-amd64 \
+            ghcr.io/tecsafe/ofcp-demo:latest-arm64
       - name: Inspect multi-arch image
-        run: docker buildx imagetools inspect ghcr.io/${{ github.repository }}:latest
+        run: docker buildx imagetools inspect ghcr.io/tecsafe/ofcp-demo:latest
