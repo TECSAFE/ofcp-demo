@@ -25,11 +25,11 @@ jobs:
         with:
           filters: |
             api:
-              - '.github/workflows/pr.yml'
+              - '.forgejo/workflows/pr.yml'
               - 'Dockerfile'
               - 'api/**'
             ui:
-              - '.github/workflows/pr.yml'
+              - '.forgejo/workflows/pr.yml'
               - 'Dockerfile'
               - 'ui/**'
 
@@ -153,6 +153,19 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+
+      # Login only to read the layer cache; a failure here just means no cache.
+      - name: Log in to Forgejo registry (cache read)
+        id: registry
+        if: ${{ needs.detect.outputs.api == 'true' || needs.detect.outputs.ui == 'true' }}
+        env:
+          REGISTRY_TOKEN: ${{ secrets.CI_TOKEN }}
+          # The account that owns CI_TOKEN.
+          REGISTRY_USER: ${{ secrets.CI_USERNAME }}
+          SERVICE: ${{ github.event.repository.name }}
+          ARCH: amd64
+        run: .forgejo/bin/registry-login
+
       - uses: docker/setup-buildx-action@v4
         if: ${{ needs.detect.outputs.api == 'true' || needs.detect.outputs.ui == 'true' }}
       - name: Build image (amd64, no push)
@@ -164,5 +177,6 @@ jobs:
           platforms: linux/amd64
           push: false
           provenance: false
-          cache-from: type=gha,scope=ofcp-demo-amd64
-          cache-to: type=gha,mode=max,scope=ofcp-demo-amd64
+          # Same ref build.yml writes, so PRs warm from main's cache. Empty
+          # means no cache. No cache-to: a PR must not overwrite main's.
+          cache-from: ${{ steps.registry.outputs.from }}

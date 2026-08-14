@@ -1,0 +1,113 @@
+#!/bin/sh
+# Log in to this Forgejo instance's container registry and report the resulting
+# build-cache configuration back to the calling workflow step.
+#
+# Everything except the token is derived from runner-provided context rather than
+# Actions variables. An unset `vars.*` expands to the empty string, which made
+# docker/login-action silently target docker.io and fail the entire build with
+# "unauthorized: incorrect username or password". There is no variable left to
+# forget to set.
+#
+# The layer cache is an optimisation, so every failure path here emits a warning
+# and reports enabled=false instead of failing the job. A build with no cache is
+# slow; a build that cannot run is broken.
+#
+# Inputs (environment):
+#   REGISTRY_TOKEN  required. Forgejo access token with package read/write.
+#   REGISTRY_USER   optional. Defaults to $GITHUB_ACTOR.
+#   SERVICE         required for image/cache outputs. Image name, e.g. "cockpit".
+#   ARCH            required for cache outputs only. Cache tag suffix, e.g. "amd64".
+#
+# Outputs ($GITHUB_OUTPUT):
+#   enabled  "true" | "false"
+#   host     registry hostname (empty when disabled)
+#   image    "<host>/<owner>/<service>" ref prefix, no tag (empty unless SERVICE is set and login succeeded)
+#   from     value for build-push-action's cache-from (empty when disabled or ARCH unset)
+#   to       value for build-push-action's cache-to   (empty when disabled or ARCH unset)
+
+set -u
+
+emit() {
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    printf '%s\n' "$1" >>"$GITHUB_OUTPUT"
+  fi
+}
+
+# Report "no cache" and succeed, so a misconfigured cache cannot fail a build.
+# Callers that require a successful login for a push destination (not just a
+# cache) must check `enabled` themselves and fail the job if it is "false".
+disable() {
+  printf '::warning::%s - building WITHOUT a layer cache.\n' "$1"
+  emit 'enabled=false'
+  emit 'host='
+  emit 'image='
+  emit 'from='
+  emit 'to='
+  exit 0
+}
+
+lower() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]'
+}
+
+[ -n "${REGISTRY_TOKEN:-}" ] || disable 'REGISTRY_TOKEN (secrets.CI_TOKEN) is empty'
+
+# The container registry is served by the Forgejo instance itself, so the host is
+# GITHUB_SERVER_URL with the scheme and any path stripped.
+HOST=${GITHUB_SERVER_URL:-}
+HOST=${HOST#https://}
+HOST=${HOST#http://}
+HOST=${HOST%%/*}
+[ -n "$HOST" ] || disable 'could not derive a registry host from GITHUB_SERVER_URL'
+
+if [ -z "${REGISTRY_USER:-}" ]; then
+  # Forgejo validates the username/token pair, so falling back to whoever
+  # triggered the run will usually fail against a service-account token. Say so
+  # explicitly rather than letting it look like a credential problem.
+  printf '::warning::REGISTRY_USER (secrets.CI_USERNAME) is empty - falling back to GITHUB_ACTOR (%s), which likely does not own the token.\n' "${GITHUB_ACTOR:-unset}"
+  REGISTRY_USER=${GITHUB_ACTOR:-}
+fi
+[ -n "$REGISTRY_USER" ] || disable 'no registry username (REGISTRY_USER and GITHUB_ACTOR are both empty)'
+
+printf 'Logging in to %s as %s\n' "$HOST" "$REGISTRY_USER"
+if ! printf '%s' "$REGISTRY_TOKEN" | docker login "$HOST" -u "$REGISTRY_USER" --password-stdin; then
+  disable "docker login to ${HOST} failed"
+fi
+
+emit 'enabled=true'
+emit "host=${HOST}"
+
+# image/from/to are all optional: callers that only need a login (e.g. to
+# derive $HOST) can omit SERVICE and ARCH entirely.
+if [ -z "${SERVICE:-}" ]; then
+  emit 'image='
+  emit 'from='
+  emit 'to='
+  exit 0
+fi
+
+# Forgejo namespaces packages under the repository owner. Docker requires
+# lowercase repository paths, and the owner is not necessarily lowercase.
+OWNER=$(lower "${GITHUB_REPOSITORY_OWNER:-}")
+if [ -z "$OWNER" ]; then
+  printf '::warning::GITHUB_REPOSITORY_OWNER is empty - logged in but not caching.\n'
+  emit 'image='
+  emit 'from='
+  emit 'to='
+  exit 0
+fi
+
+IMAGE="${HOST}/${OWNER}/$(lower "$SERVICE")"
+emit "image=${IMAGE}"
+
+# ARCH is only needed for the per-arch build cache ref.
+if [ -z "${ARCH:-}" ]; then
+  emit 'from='
+  emit 'to='
+  exit 0
+fi
+
+REF="${IMAGE}:buildcache-$(lower "$ARCH")"
+printf 'Build cache: %s\n' "$REF"
+emit "from=type=registry,ref=${REF}"
+emit "to=type=registry,ref=${REF},mode=max,image-manifest=true,oci-mediatypes=true"

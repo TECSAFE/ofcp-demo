@@ -10,15 +10,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # No version tagging: this repo is read-only on Forgejo, so CI cannot push tags.
+
   test-api:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
+      - uses: https://github.com/actions/checkout@v7
+      - uses: https://github.com/pnpm/action-setup@v6
         with:
           package_json_file: api/package.json
-      - uses: actions/setup-node@v7
+      - uses: https://github.com/actions/setup-node@v7
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -37,11 +39,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
+      - uses: https://github.com/actions/checkout@v7
+      - uses: https://github.com/pnpm/action-setup@v6
         with:
           package_json_file: ui/package.json
-      - uses: actions/setup-node@v7
+      - uses: https://github.com/actions/setup-node@v7
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -70,25 +72,42 @@ jobs:
       contents: read
       packages: write
     steps:
-      - name: Login to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.CI_TOKEN }}
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
+      - uses: https://github.com/actions/checkout@v7
+
+      # Images and layer cache go to the Forgejo registry now, not ghcr.io.
+      # The script derives host and user from the runner, so there is no
+      # variable to leave unset. Needs the checkout: it lives in this repo.
+      - name: Log in to Forgejo registry
+        id: registry
+        env:
+          REGISTRY_TOKEN: ${{ secrets.CI_TOKEN }}
+          # The account that owns CI_TOKEN.
+          REGISTRY_USER: ${{ secrets.CI_USERNAME }}
+          SERVICE: ${{ github.event.repository.name }}
+          ARCH: ${{ matrix.arch }}
+        run: .forgejo/bin/registry-login
+
+      # No login means nowhere to push, so stop here.
+      - name: Require registry login
+        if: ${{ steps.registry.outputs.enabled != 'true' }}
+        run: |
+          echo "::error::Forgejo registry login failed - cannot push ${{ github.event.repository.name }} (${{ matrix.arch }})."
+          exit 1
+
+      - uses: https://github.com/docker/setup-buildx-action@v4
+
       - name: Build and push (single arch)
-        uses: docker/build-push-action@v7
+        uses: https://github.com/docker/build-push-action@v7
         with:
           context: .
           target: production
           platforms: ${{ matrix.platform }}
           push: true
           provenance: false
-          tags: ghcr.io/tecsafe/ofcp-demo:latest-${{ matrix.arch }}
-          cache-from: type=gha,scope=ofcp-demo-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=ofcp-demo-${{ matrix.arch }}
+          tags: ${{ steps.registry.outputs.image }}:latest-${{ matrix.arch }}
+          # Registry cache: type=gha has no backing service on the Forgejo runner.
+          cache-from: ${{ steps.registry.outputs.from }}
+          cache-to: ${{ steps.registry.outputs.to }}
 
   manifest:
     needs: [build]
@@ -98,18 +117,32 @@ jobs:
       contents: read
       packages: write
     steps:
-      - name: Login to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/setup-buildx-action@v4
+      - uses: https://github.com/actions/checkout@v7
+
+      - name: Log in to Forgejo registry
+        id: registry
+        env:
+          REGISTRY_TOKEN: ${{ secrets.CI_TOKEN }}
+          REGISTRY_USER: ${{ secrets.CI_USERNAME }}
+          SERVICE: ${{ github.event.repository.name }}
+        run: .forgejo/bin/registry-login
+
+      - name: Require registry login
+        if: ${{ steps.registry.outputs.enabled != 'true' }}
+        run: |
+          echo "::error::Forgejo registry login failed - cannot create the manifest for ${{ github.event.repository.name }}."
+          exit 1
+
+      - uses: https://github.com/docker/setup-buildx-action@v4
+
       - name: Create multi-arch manifest
         run: |
+          IMAGE="${{ steps.registry.outputs.image }}"
+
           docker buildx imagetools create \
-            --tag ghcr.io/tecsafe/ofcp-demo:latest \
-            ghcr.io/tecsafe/ofcp-demo:latest-amd64 \
-            ghcr.io/tecsafe/ofcp-demo:latest-arm64
+            --tag "${IMAGE}:latest" \
+            "${IMAGE}:latest-amd64" \
+            "${IMAGE}:latest-arm64"
+
       - name: Inspect multi-arch image
-        run: docker buildx imagetools inspect ghcr.io/tecsafe/ofcp-demo:latest
+        run: docker buildx imagetools inspect "${{ steps.registry.outputs.image }}:latest"
