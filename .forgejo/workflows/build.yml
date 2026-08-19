@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v7
       - uses: https://github.com/pnpm/action-setup@v6
         with:
           package_json_file: api/package.json
@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v7
       - uses: https://github.com/pnpm/action-setup@v6
         with:
           package_json_file: ui/package.json
@@ -72,7 +72,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v7
 
       # Images and layer cache go to the Forgejo registry now, not ghcr.io.
       # The script derives host and user from the runner, so there is no
@@ -117,7 +117,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: https://github.com/actions/checkout@v7
+      - uses: actions/checkout@v7
 
       - name: Log in to Forgejo registry
         id: registry
