@@ -52,6 +52,9 @@ jobs:
       - name: Unit tests
         working-directory: ui
         run: pnpm test
+      - name: Typecheck
+        working-directory: ui
+        run: pnpm typecheck
 
   build:
     needs: [test-api, test-ui]
