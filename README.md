@@ -295,4 +295,4 @@ saleschannel to see full configurator data.
 ## Tests
 
     cd api && pnpm test && pnpm test:e2e
-    cd ui && pnpm test && pnpm exec nuxt typecheck
+    cd ui && pnpm test && pnpm typecheck
