@@ -48,7 +48,6 @@ async function mountWidget(): Promise<void> {
   widget = settings.value.debugWidget
     ? tecsafe.createDebugWidget(container.value)
     : manager.createProductDetailWidget(container.value, articleNumber);
-  widget.show();
 }
 
 onMounted(mountWidget);

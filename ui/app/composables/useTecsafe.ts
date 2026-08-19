@@ -1,32 +1,49 @@
 import {
-  BaseWidget,
   IN_MESSAGES,
   OUT_MESSAGES,
   TecsafeWidgetManager,
   WidgetManagerConfig,
 } from '@tecsafe/widget-sdk';
+import type { BaseWidget } from '@tecsafe/widget-sdk';
 
 // The widget SDK exposes its message definitions through the IN_MESSAGES /
 // OUT_MESSAGES maps rather than as individual named exports.
 const { InMessageRequestArticleInfo } = IN_MESSAGES;
 const { OutMessageArticleInfo } = OUT_MESSAGES;
 
-// The SDK ships no factory for the debug console; it is a BaseWidget whose
-// iframe path is `debug`. widgetBaseURL already ends in `/iframe`, so the
-// iframe resolves to `<widgetBaseUrl>/debug` (e.g. .../iframe/debug).
-class DebugWidget extends BaseWidget {
-  protected override readonly uiPath = 'debug';
-}
-
 // The SDK requires a single manager instance per page (duplicate instances
 // double-fetch tokens and double-bind events), hence module-level state.
 let manager: TecsafeWidgetManager | null = null;
+
+/**
+ * Builds the SDK configuration. Extracted so the flag mapping is testable without a manager:
+ * the demo's single whitelabel debug switch turns on both SDK debug features - the debug
+ * console widget and the host-page SDK debugger overlay.
+ */
+export function buildWidgetManagerConfig(input: {
+  trackingAllowed: boolean;
+  languageRFC4647: string;
+  widgetBaseUrl: string;
+  debug: boolean;
+}): WidgetManagerConfig {
+  return new WidgetManagerConfig({
+    trackingAllowed: input.trackingAllowed,
+    languageRFC4647: input.languageRFC4647,
+    currencyCodeISO4217: 'EUR',
+    taxIncluded: true,
+    widgetBaseURL: input.widgetBaseUrl,
+    allowedOrigins: [new URL(input.widgetBaseUrl).origin],
+    debugWidget: input.debug,
+    sdkDebugger: input.debug,
+  });
+}
 
 export function useTecsafe() {
   const config = useRuntimeConfig();
   const api = useApi();
   const { consent } = useConsent();
   const { $i18n } = useNuxtApp();
+  const { settings } = useWhitelabel();
 
   function ensureManager(): TecsafeWidgetManager {
     if (manager) return manager;
@@ -57,15 +74,13 @@ export function useTecsafe() {
           }
         },
       },
-      new WidgetManagerConfig({
+      buildWidgetManagerConfig({
         trackingAllowed: consent.value.tracking,
         languageRFC4647:
           $i18n.locales.value.find((l) => l.code === $i18n.locale.value)?.language ??
           $i18n.locale.value,
-        currencyCodeISO4217: 'EUR',
-        taxIncluded: true,
-        widgetBaseURL: config.public.widgetBaseUrl,
-        allowedOrigins: [new URL(config.public.widgetBaseUrl).origin],
+        widgetBaseUrl: config.public.widgetBaseUrl,
+        debug: settings.value.debugWidget,
       }),
     );
     manager.on(InMessageRequestArticleInfo, async (e) => {
@@ -95,12 +110,9 @@ export function useTecsafe() {
   }
 
   function createDebugWidget(el: HTMLElement): BaseWidget {
-    const m = ensureManager();
-    const widget = new DebugWidget(m.getConfig(), el, m);
-    // Register it like the SDK's own createProductDetailWidget so a later
-    // manager.destroyAll() also tears down the debug iframe.
-    m.getWidgets().push(widget);
-    return widget;
+    // The SDK's factory registers and shows the widget itself, and only works when
+    // config.debugWidget is on - which ensureManager() derives from the whitelabel switch.
+    return ensureManager().createDebugWidget(el);
   }
 
   async function destroy(): Promise<void> {
