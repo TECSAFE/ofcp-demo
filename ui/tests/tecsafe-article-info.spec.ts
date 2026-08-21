@@ -43,9 +43,8 @@ describe('respondToArticleInfoRequest', () => {
 
     expect(respond).toHaveBeenCalledWith({
       article: { manufacturerArticleNumber: 'OFCP-DUMMY-001' },
-      articleNumber: 'OFCP-DUMMY-001',
       info: {
-        ean: '4014549900010',
+        articleNumber: 'OFCP-DUMMY-001',
         name: 'OFCP Dummy Item 001',
         price: '1.00',
         stock: 999,
@@ -54,14 +53,13 @@ describe('respondToArticleInfoRequest', () => {
     });
   });
 
-  it('answers an unresolvable identifier with info: null and a string articleNumber', async () => {
+  it('answers an unresolvable identifier with info: null', async () => {
     const respond = vi.fn();
 
     await respondToArticleInfoRequest([{ ean: '0000000000000' }], async () => null, respond);
 
     expect(respond).toHaveBeenCalledWith({
       article: { ean: '0000000000000' },
-      articleNumber: '0000000000000',
       info: null,
     });
   });
@@ -85,7 +83,6 @@ describe('respondToArticleInfoRequest', () => {
     expect(respond).toHaveBeenCalledWith(
       expect.objectContaining({
         article: { manufacturerArticleNumber: 'BROKEN' },
-        articleNumber: 'BROKEN',
         info: null,
       }),
     );

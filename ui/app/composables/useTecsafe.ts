@@ -4,12 +4,16 @@ import {
   TecsafeWidgetManager,
   WidgetManagerConfig,
 } from '@tecsafe/widget-sdk';
-import type { ArticleIdentifier, BaseWidget, TecsafeArticle } from '@tecsafe/widget-sdk';
+import type { ArticleIdentifier, BaseWidget } from '@tecsafe/widget-sdk';
 
 // The widget SDK exposes its message definitions through the IN_MESSAGES /
 // OUT_MESSAGES maps rather than as individual named exports.
 const { InMessageRequestArticleInfo } = IN_MESSAGES;
 const { OutMessageArticleInfo } = OUT_MESSAGES;
+
+// TecsafeArticle is not a root export as of widget-sdk 0.4.0, so it is derived
+// from the config field it populates instead of deep-importing SDK internals.
+type TecsafeArticle = WidgetManagerConfig['tecsafeArticles'][number];
 
 // The SDK requires a single manager instance per page (duplicate instances
 // double-fetch tokens and double-bind events), hence module-level state.
@@ -65,15 +69,6 @@ export function buildWidgetManagerConfig(input: {
   });
 }
 
-/** The demo's own article number, if the identifier carries one; otherwise its EAN. */
-function fallbackArticleNumber(identifier: ArticleIdentifier): string {
-  return (
-    ('manufacturerArticleNumber' in identifier && identifier.manufacturerArticleNumber) ||
-    ('ean' in identifier && identifier.ean) ||
-    ''
-  );
-}
-
 // The exact payload shape OutMessageArticleInfo.create() expects, derived from the SDK
 // rather than duplicated by hand so it can't drift from the message definition.
 type ArticleInfoPayload = Parameters<typeof OutMessageArticleInfo.create>[0];
@@ -95,10 +90,9 @@ export async function respondToArticleInfoRequest(
         const product = await fetchProduct(identifier);
         respond({
           article: identifier,
-          articleNumber: product?.articleNumber ?? fallbackArticleNumber(identifier),
           info: product
             ? {
-                ean: product.ean,
+                articleNumber: product.articleNumber,
                 name: product.name,
                 price: product.price.toFixed(2),
                 stock: product.stock,
@@ -111,7 +105,6 @@ export async function respondToArticleInfoRequest(
         // widget can render its fallback instead of timing out.
         respond({
           article: identifier,
-          articleNumber: fallbackArticleNumber(identifier),
           info: null,
         });
       }
