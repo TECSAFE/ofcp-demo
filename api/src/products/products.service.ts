@@ -24,4 +24,20 @@ export class ProductsService {
       null
     );
   }
+
+  byEan(ean: string): Product | null {
+    return (
+      DEMO_PRODUCTS.find((p) => p.ean === ean) ??
+      DUMMY_ITEMS.find((p) => p.ean === ean) ??
+      null
+    );
+  }
+
+  /** The shop's TECSAFE article catalog, in the shape the widget SDK expects. */
+  listTecsafeArticles(): { productNumber: string; price: string }[] {
+    return DUMMY_ITEMS.map((item) => ({
+      productNumber: item.articleNumber,
+      price: item.price.toFixed(2),
+    }));
+  }
 }
