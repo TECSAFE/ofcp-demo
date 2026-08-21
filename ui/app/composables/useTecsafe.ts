@@ -15,6 +15,31 @@ const { OutMessageArticleInfo } = OUT_MESSAGES;
 // double-fetch tokens and double-bind events), hence module-level state.
 let manager: TecsafeWidgetManager | null = null;
 
+// ensureManager() must stay synchronous, but the shop's TECSAFE article list
+// comes from the API. The SDK reads config.tecsafeArticles live at request
+// time, so this stable array reference is handed to the config once and its
+// *contents* are swapped in place (loadTecsafeArticles) once the fetch
+// resolves, rather than replacing the array itself.
+const tecsafeArticles: TecsafeArticle[] = [];
+
+/**
+ * Fetches the shop's TECSAFE article list and replaces `target`'s contents in place.
+ * Exported for testing; production callers rely on the `target` default.
+ */
+export async function loadTecsafeArticles(
+  api: (url: string) => Promise<{ articles: TecsafeArticle[] }>,
+  target: TecsafeArticle[] = tecsafeArticles,
+): Promise<void> {
+  try {
+    const { articles } = await api('/products/tecsafe-articles');
+    target.splice(0, target.length, ...articles);
+  } catch (e) {
+    // Swallow and keep whatever list we already had - the demo must not
+    // crash if the API is briefly unavailable, and we don't retry in a loop.
+    console.error('Failed to load the TECSAFE article list', e);
+  }
+}
+
 /**
  * Builds the SDK configuration. Extracted so the flag mapping is testable without a manager:
  * the demo's single whitelabel debug switch turns on both SDK debug features - the debug
@@ -52,6 +77,9 @@ export function useTecsafe() {
     if (!consent.value?.dataExchange) {
       throw new Error('TecsafeWidgetManager must not be created without data-exchange consent');
     }
+    // Fire-and-forget: the config below hands the SDK the stable array
+    // reference immediately so ensureManager() stays synchronous.
+    void loadTecsafeArticles(api);
     manager = new TecsafeWidgetManager(
       // CustomerTokenCallback: the demo API performs the real two-step
       // exchange; oldToken makes TECSAFE merge guest assets on login.
@@ -83,6 +111,7 @@ export function useTecsafe() {
           $i18n.locale.value,
         widgetBaseUrl: config.public.widgetBaseUrl,
         debug: settings.value.debugWidget,
+        tecsafeArticles,
       }),
     );
     manager.on(InMessageRequestArticleInfo, async (e) => {
