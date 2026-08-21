@@ -21,18 +21,14 @@ describe('ProductsService', () => {
 
   it('hides dummy items from the default listing', () => {
     const articleNumbers = service.list().map((p) => p.articleNumber);
-    expect(articleNumbers.some((a) => a.startsWith('OFCP-DUMMY-'))).toBe(
-      false,
-    );
+    expect(articleNumbers.some((a) => a.startsWith('OFCP-DUMMY-'))).toBe(false);
   });
 
   it('injects the dummy items when asked to', () => {
     const products = service.list({ includeDummyItems: true });
     expect(products).toHaveLength(DEMO_PRODUCTS.length + DUMMY_ITEM_COUNT);
     // Regular catalog first, dummy items appended.
-    expect(products[DEMO_PRODUCTS.length].articleNumber).toBe(
-      'OFCP-DUMMY-001',
-    );
+    expect(products[DEMO_PRODUCTS.length].articleNumber).toBe('OFCP-DUMMY-001');
   });
 
   it('always resolves dummy items by article number', () => {
@@ -44,7 +40,10 @@ describe('ProductsService', () => {
   it('lists the TECSAFE dummy-item catalog as productNumber/price pairs', () => {
     const articles = service.listTecsafeArticles();
     expect(articles).toHaveLength(DUMMY_ITEM_COUNT);
-    expect(articles[0]).toEqual({ productNumber: 'OFCP-DUMMY-001', price: '1.00' });
+    expect(articles[0]).toEqual({
+      productNumber: 'OFCP-DUMMY-001',
+      price: '1.00',
+    });
   });
 
   it('resolves a product by EAN', () => {

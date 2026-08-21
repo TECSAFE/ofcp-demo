@@ -10,7 +10,10 @@ describe('ProductsController', () => {
     it('returns every dummy item as a productNumber/price pair', () => {
       const { articles } = controller.tecsafeArticles();
       expect(articles).toHaveLength(DUMMY_ITEM_COUNT);
-      expect(articles[0]).toEqual({ productNumber: 'OFCP-DUMMY-001', price: '1.00' });
+      expect(articles[0]).toEqual({
+        productNumber: 'OFCP-DUMMY-001',
+        price: '1.00',
+      });
     });
 
     it('formats price as a two-decimal string', () => {
@@ -34,7 +37,9 @@ describe('ProductsController', () => {
     });
 
     it('throws NotFoundException for an unknown EAN', () => {
-      expect(() => controller.byEan('0000000000000')).toThrow(NotFoundException);
+      expect(() => controller.byEan('0000000000000')).toThrow(
+        NotFoundException,
+      );
     });
   });
 });
