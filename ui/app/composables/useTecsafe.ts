@@ -4,7 +4,7 @@ import {
   TecsafeWidgetManager,
   WidgetManagerConfig,
 } from '@tecsafe/widget-sdk';
-import type { BaseWidget } from '@tecsafe/widget-sdk';
+import type { BaseWidget, TecsafeArticle } from '@tecsafe/widget-sdk';
 
 // The widget SDK exposes its message definitions through the IN_MESSAGES /
 // OUT_MESSAGES maps rather than as individual named exports.
@@ -25,6 +25,7 @@ export function buildWidgetManagerConfig(input: {
   languageRFC4647: string;
   widgetBaseUrl: string;
   debug: boolean;
+  tecsafeArticles: TecsafeArticle[];
 }): WidgetManagerConfig {
   return new WidgetManagerConfig({
     trackingAllowed: input.trackingAllowed,
@@ -35,6 +36,7 @@ export function buildWidgetManagerConfig(input: {
     allowedOrigins: [new URL(input.widgetBaseUrl).origin],
     debugWidget: input.debug,
     sdkDebugger: input.debug,
+    tecsafeArticles: input.tecsafeArticles,
   });
 }
 

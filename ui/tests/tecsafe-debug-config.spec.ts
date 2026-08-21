@@ -5,6 +5,7 @@ const base = {
   trackingAllowed: false,
   languageRFC4647: 'de-DE',
   widgetBaseUrl: 'https://app-ui.example.com/iframe',
+  tecsafeArticles: [{ productNumber: 'OFCP-DUMMY-001', price: '1.00' }],
 };
 
 describe('buildWidgetManagerConfig', () => {
@@ -37,5 +38,11 @@ describe('buildWidgetManagerConfig', () => {
     expect(config.languageRFC4647).toBe('en-US');
     expect(config.currencyCodeISO4217).toBe('EUR');
     expect(config.taxIncluded).toBe(true);
+  });
+
+  it('passes the shop TECSAFE article list through to the SDK config', () => {
+    const articles = [{ productNumber: 'OFCP-DUMMY-007', price: '7.00' }];
+    const config = buildWidgetManagerConfig({ ...base, debug: false, tecsafeArticles: articles });
+    expect(config.tecsafeArticles).toEqual(articles);
   });
 });
