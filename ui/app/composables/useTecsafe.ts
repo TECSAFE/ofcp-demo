@@ -4,7 +4,7 @@ import {
   TecsafeWidgetManager,
   WidgetManagerConfig,
 } from '@tecsafe/widget-sdk';
-import type { BaseWidget, TecsafeArticle } from '@tecsafe/widget-sdk';
+import type { ArticleIdentifier, BaseWidget, TecsafeArticle } from '@tecsafe/widget-sdk';
 
 // The widget SDK exposes its message definitions through the IN_MESSAGES /
 // OUT_MESSAGES maps rather than as individual named exports.
@@ -65,6 +65,82 @@ export function buildWidgetManagerConfig(input: {
   });
 }
 
+/** The demo's own article number, if the identifier carries one; otherwise its EAN. */
+function fallbackArticleNumber(identifier: ArticleIdentifier): string {
+  return (
+    ('manufacturerArticleNumber' in identifier && identifier.manufacturerArticleNumber) ||
+    ('ean' in identifier && identifier.ean) ||
+    ''
+  );
+}
+
+// The exact payload shape OutMessageArticleInfo.create() expects, derived from the SDK
+// rather than duplicated by hand so it can't drift from the message definition.
+type ArticleInfoPayload = Parameters<typeof OutMessageArticleInfo.create>[0];
+
+/**
+ * Answers a `request-article-info` message once per requested identifier, echoing the
+ * identifier back so the widget can correlate it. Extracted so it is testable without a
+ * Nuxt app or a manager instance - `fetchProduct` and `respond` are the only SDK/API touch
+ * points. One identifier's lookup failing must not prevent the others from being answered.
+ */
+export async function respondToArticleInfoRequest(
+  identifiers: ArticleIdentifier[],
+  fetchProduct: (identifier: ArticleIdentifier) => Promise<Product | null>,
+  respond: (payload: ArticleInfoPayload) => void,
+): Promise<void> {
+  await Promise.all(
+    identifiers.map(async (identifier) => {
+      try {
+        const product = await fetchProduct(identifier);
+        respond({
+          article: identifier,
+          articleNumber: product?.articleNumber ?? fallbackArticleNumber(identifier),
+          info: product
+            ? {
+                ean: product.ean,
+                name: product.name,
+                price: product.price.toFixed(2),
+                stock: product.stock,
+                description: product.description,
+              }
+            : null,
+        });
+      } catch {
+        // Always answer, even for unknown/unresolvable articles, so the
+        // widget can render its fallback instead of timing out.
+        respond({
+          article: identifier,
+          articleNumber: fallbackArticleNumber(identifier),
+          info: null,
+        });
+      }
+    }),
+  );
+}
+
+/**
+ * Resolves an identifier to a product: manufacturerArticleNumber maps directly to the
+ * demo's articleNumber lookup, otherwise it is resolved by EAN. Never fetches the full
+ * catalog - each identifier is looked up individually.
+ */
+async function fetchProductByIdentifier(
+  api: ReturnType<typeof useApi>,
+  identifier: ArticleIdentifier,
+): Promise<Product | null> {
+  if ('manufacturerArticleNumber' in identifier && identifier.manufacturerArticleNumber) {
+    const { product } = await api<{ product: Product }>(
+      `/products/${identifier.manufacturerArticleNumber}`,
+    );
+    return product;
+  }
+  if ('ean' in identifier && identifier.ean) {
+    const { product } = await api<{ product: Product }>(`/products/ean/${identifier.ean}`);
+    return product;
+  }
+  return null;
+}
+
 export function useTecsafe() {
   const config = useRuntimeConfig();
   const api = useApi();
@@ -114,29 +190,13 @@ export function useTecsafe() {
         tecsafeArticles,
       }),
     );
-    manager.on(InMessageRequestArticleInfo, async (e) => {
-      try {
-        const { product } = await api<{ product: Product }>(`/products/${e.event.articleNumber}`);
-        e.respond(
-          OutMessageArticleInfo.create({
-            articleNumber: e.event.articleNumber,
-            info: {
-              ean: product.ean,
-              name: product.name,
-              price: product.price.toFixed(2),
-              stock: product.stock,
-              description: product.description,
-            },
-          }),
-        );
-      } catch {
-        // Always answer, even for unknown articles, so the widget can
-        // render its fallback instead of timing out.
-        e.respond(
-          OutMessageArticleInfo.create({ articleNumber: e.event.articleNumber, info: null }),
-        );
-      }
-    });
+    manager.on(InMessageRequestArticleInfo, (e) =>
+      respondToArticleInfoRequest(
+        e.event.articles,
+        (identifier) => fetchProductByIdentifier(api, identifier),
+        (payload) => e.respond(OutMessageArticleInfo.create(payload)),
+      ),
+    );
     return manager;
   }
 
