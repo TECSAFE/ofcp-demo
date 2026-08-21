@@ -40,4 +40,19 @@ describe('ProductsService', () => {
     expect(product?.price).toBe(42);
     expect(product?.stock).toBeGreaterThan(0);
   });
+
+  it('lists the TECSAFE dummy-item catalog as productNumber/price pairs', () => {
+    const articles = service.listTecsafeArticles();
+    expect(articles).toHaveLength(DUMMY_ITEM_COUNT);
+    expect(articles[0]).toEqual({ productNumber: 'OFCP-DUMMY-001', price: '1.00' });
+  });
+
+  it('resolves a product by EAN', () => {
+    const dummy = service.byArticleNumber('OFCP-DUMMY-042');
+    expect(service.byEan(dummy!.ean)?.articleNumber).toBe('OFCP-DUMMY-042');
+  });
+
+  it('returns null for an unknown EAN', () => {
+    expect(service.byEan('0000000000000')).toBeNull();
+  });
 });
