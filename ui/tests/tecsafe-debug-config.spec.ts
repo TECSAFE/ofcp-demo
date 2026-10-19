@@ -3,7 +3,7 @@ import { buildWidgetManagerConfig, loadTecsafeArticles } from '../app/composable
 
 const base = {
   trackingAllowed: false,
-  languageRFC4647: 'de-DE',
+  language: 'de-DE',
   widgetBaseUrl: 'https://app-ui.example.com/iframe',
   tecsafeArticles: [{ productNumber: 'OFCP-DUMMY-001', price: '1.00' }],
 };
@@ -31,18 +31,23 @@ describe('buildWidgetManagerConfig', () => {
     const config = buildWidgetManagerConfig({
       ...base,
       trackingAllowed: true,
-      languageRFC4647: 'en-US',
+      language: 'en-US',
       debug: false,
     });
     expect(config.trackingAllowed).toBe(true);
-    expect(config.languageRFC4647).toBe('en-US');
-    expect(config.currencyCodeISO4217).toBe('EUR');
-    expect(config.taxIncluded).toBe(true);
+    expect(config.language).toBe('en-US');
+    expect(config.currencyCode).toBe('EUR');
+    expect(config.priceMode).toBe('gross');
+    expect(config.taxCategories).toEqual({ S: 19, AA: 7 });
   });
 
   it('passes the shop TECSAFE article list through to the SDK config', () => {
     const articles = [{ productNumber: 'OFCP-DUMMY-007', price: '7.00' }];
-    const config = buildWidgetManagerConfig({ ...base, debug: false, tecsafeArticles: articles });
+    const config = buildWidgetManagerConfig({
+      ...base,
+      debug: false,
+      tecsafeArticles: articles,
+    });
     expect(config.tecsafeArticles).toEqual(articles);
   });
 });

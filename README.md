@@ -84,15 +84,33 @@ per page) and wires it to the shop:
   enforcement point of the consent rule above. It supplies the manager with:
   - a **customer-token callback** that calls `POST /tecsafe/token` (step 2
     above), forwarding the SDK's own previous token as `oldToken`;
-  - an **add-to-cart handler** (`single`) that calls
-    `POST /cart/items` — the widget's own "add configured item" action, wired
-    straight into the shop's cart;
   - an **article-info responder** for
     `InMessageRequestArticleInfo`/`OutMessageArticleInfo` (imported from the
     SDK's `IN_MESSAGES`/`OUT_MESSAGES` maps, not named exports) that answers
     from `GET /products/:articleNumber`, always responding — even
     `info: null` for unknown articles — so the widget never times out
     waiting for product data.
+- SDK **0.5.0** uses a two-argument manager constructor and three business
+  event handlers, registered synchronously before any widget starts:
+  - **Article info** echoes the complete identifier (`gtin`,
+    `manufacturerArticleNumber`, or `supplierArticleNumber`) and returns
+    `hostShopArticleNumber`, boolean availability, tax category, and gross
+    price scales. The demo resolves GTINs through its existing EAN endpoint.
+  - **Layout prices** converts incoming net EUR layout and service prices to
+    gross EUR using the session's tax categories (`S`: 19%, `AA`: 7%). It
+    preserves quantity scales, discounts, request IDs, and service IDs.
+  - **Cart punchout** sends the complete transfer to `POST /cart/punchout`
+    and replies once with `cart-punchout-result` after acceptance or failure.
+    The API validates the batch and stores all positions in one update,
+    retaining parent links, identifiers, quantities, pricing, and metadata.
+    The cart displays supplied titles and line totals; the API also exposes
+    effective unit prices.
+    repeated transfers stay separate. Ordinary shop additions still use
+    `POST /cart/items`.
+  Session configuration uses `language`, `currencyCode: 'EUR'`,
+  `priceMode: 'gross'`, and the same `taxCategories` as layout-price conversion.
+  This demo accepts widget-supplied punchout prices; a production shop must
+  apply its own backend pricing rules.
 - [`tecsafe.client.ts`](ui/app/plugins/tecsafe.client.ts) is the lifecycle
   glue: watching consent tears the manager down on withdrawal (SDK's GDPR
   requirement) or on a tracking-flag change (`trackingAllowed` is

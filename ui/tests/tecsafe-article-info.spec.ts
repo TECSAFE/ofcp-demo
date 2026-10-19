@@ -14,7 +14,7 @@ describe('respondToArticleInfoRequest', () => {
   it('answers once per requested identifier, echoing it back', async () => {
     const identifiers = [
       { manufacturerArticleNumber: 'OFCP-DUMMY-001' },
-      { ean: '4014549900010' },
+      { gtin: '4014549900010' },
       { manufacturerArticleNumber: 'UNKNOWN' },
     ];
     const fetchProduct = vi.fn(async (id: (typeof identifiers)[number]) =>
@@ -44,22 +44,44 @@ describe('respondToArticleInfoRequest', () => {
     expect(respond).toHaveBeenCalledWith({
       article: { manufacturerArticleNumber: 'OFCP-DUMMY-001' },
       info: {
-        articleNumber: 'OFCP-DUMMY-001',
-        name: 'OFCP Dummy Item 001',
-        price: '1.00',
-        stock: 999,
-        description: 'dummy',
+        hostShopArticleNumber: 'OFCP-DUMMY-001',
+        availableStock: true,
+        taxCategory: 'S',
+        priceScales: [
+          {
+            fromQuantity: 1,
+            unitPrice: '1.00',
+            allowancesAndCharges: [],
+            effectiveUnitPrice: '1.00',
+          },
+        ],
       },
+    });
+  });
+
+  it('reports zero stock as unavailable', async () => {
+    const respond = vi.fn();
+    await respondToArticleInfoRequest(
+      [{ supplierArticleNumber: product.articleNumber, gtin: product.ean }],
+      async () => ({ ...product, stock: 0 }),
+      respond,
+    );
+    expect(respond).toHaveBeenCalledWith({
+      article: {
+        supplierArticleNumber: product.articleNumber,
+        gtin: product.ean,
+      },
+      info: expect.objectContaining({ availableStock: false }),
     });
   });
 
   it('answers an unresolvable identifier with info: null', async () => {
     const respond = vi.fn();
 
-    await respondToArticleInfoRequest([{ ean: '0000000000000' }], async () => null, respond);
+    await respondToArticleInfoRequest([{ gtin: '0000000000000' }], async () => null, respond);
 
     expect(respond).toHaveBeenCalledWith({
-      article: { ean: '0000000000000' },
+      article: { gtin: '0000000000000' },
       info: null,
     });
   });
@@ -89,7 +111,9 @@ describe('respondToArticleInfoRequest', () => {
     expect(respond).toHaveBeenCalledWith(
       expect.objectContaining({
         article: { manufacturerArticleNumber: 'OFCP-DUMMY-001' },
-        info: expect.objectContaining({ name: product.name }),
+        info: expect.objectContaining({
+          hostShopArticleNumber: product.articleNumber,
+        }),
       }),
     );
   });

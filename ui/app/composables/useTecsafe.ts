@@ -4,14 +4,22 @@ import {
   TecsafeWidgetManager,
   WidgetManagerConfig,
 } from '@tecsafe/widget-sdk';
-import type { ArticleIdentifier, BaseWidget } from '@tecsafe/widget-sdk';
+import type {
+  ArticleIdentifier,
+  BaseWidget,
+  CartPunchoutRequest,
+  CartPunchoutResult,
+} from '@tecsafe/widget-sdk';
+import { calculateLayoutPrices, DEMO_TAX_CATEGORIES } from '../utils/tecsafe-pricing';
 
 // The widget SDK exposes its message definitions through the IN_MESSAGES /
 // OUT_MESSAGES maps rather than as individual named exports.
-const { InMessageRequestArticleInfo } = IN_MESSAGES;
-const { OutMessageArticleInfo } = OUT_MESSAGES;
+const { InMessageRequestArticleInfo, InMessageRequestLayoutPrices, InMessageCartPunchout } =
+  IN_MESSAGES;
+const { OutMessageArticleInfo, OutMessageLayoutPrices, OutMessageCartPunchoutResult } =
+  OUT_MESSAGES;
 
-// TecsafeArticle is not a root export as of widget-sdk 0.4.0, so it is derived
+// TecsafeArticle is not a root export, so it is derived
 // from the config field it populates instead of deep-importing SDK internals.
 type TecsafeArticle = WidgetManagerConfig['tecsafeArticles'][number];
 
@@ -51,16 +59,17 @@ export async function loadTecsafeArticles(
  */
 export function buildWidgetManagerConfig(input: {
   trackingAllowed: boolean;
-  languageRFC4647: string;
+  language: string;
   widgetBaseUrl: string;
   debug: boolean;
   tecsafeArticles: TecsafeArticle[];
 }): WidgetManagerConfig {
   return new WidgetManagerConfig({
     trackingAllowed: input.trackingAllowed,
-    languageRFC4647: input.languageRFC4647,
-    currencyCodeISO4217: 'EUR',
-    taxIncluded: true,
+    language: input.language,
+    currencyCode: 'EUR',
+    priceMode: 'gross',
+    taxCategories: { ...DEMO_TAX_CATEGORIES },
     widgetBaseURL: input.widgetBaseUrl,
     allowedOrigins: [new URL(input.widgetBaseUrl).origin],
     debugWidget: input.debug,
@@ -92,11 +101,17 @@ export async function respondToArticleInfoRequest(
           article: identifier,
           info: product
             ? {
-                articleNumber: product.articleNumber,
-                name: product.name,
-                price: product.price.toFixed(2),
-                stock: product.stock,
-                description: product.description,
+                hostShopArticleNumber: product.articleNumber,
+                availableStock: product.stock > 0,
+                taxCategory: 'S',
+                priceScales: [
+                  {
+                    fromQuantity: 1,
+                    unitPrice: product.price.toFixed(2),
+                    allowancesAndCharges: [],
+                    effectiveUnitPrice: product.price.toFixed(2),
+                  },
+                ],
               }
             : null,
         });
@@ -114,24 +129,47 @@ export async function respondToArticleInfoRequest(
 
 /**
  * Resolves an identifier to a product: manufacturerArticleNumber maps directly to the
- * demo's articleNumber lookup, otherwise it is resolved by EAN. Never fetches the full
- * catalog - each identifier is looked up individually.
+ * demo's articleNumber lookup, as does supplierArticleNumber. GTIN uses the EAN endpoint.
+ * Never fetches the full catalog - each identifier is looked up individually.
  */
-async function fetchProductByIdentifier(
+export async function fetchProductByIdentifier(
   api: ReturnType<typeof useApi>,
   identifier: ArticleIdentifier,
 ): Promise<Product | null> {
   if ('manufacturerArticleNumber' in identifier && identifier.manufacturerArticleNumber) {
     const { product } = await api<{ product: Product }>(
-      `/products/${identifier.manufacturerArticleNumber}`,
+      `/products/${encodeURIComponent(identifier.manufacturerArticleNumber)}`,
     );
     return product;
   }
-  if ('ean' in identifier && identifier.ean) {
-    const { product } = await api<{ product: Product }>(`/products/ean/${identifier.ean}`);
+  if (identifier.supplierArticleNumber) {
+    const { product } = await api<{ product: Product }>(
+      `/products/${encodeURIComponent(identifier.supplierArticleNumber)}`,
+    );
+    return product;
+  }
+  if (identifier.gtin) {
+    const { product } = await api<{ product: Product }>(
+      `/products/ean/${encodeURIComponent(identifier.gtin)}`,
+    );
     return product;
   }
   return null;
+}
+
+/** Reply once, after the backend has accepted or rejected the complete transfer. */
+export async function respondToCartPunchoutRequest(
+  request: CartPunchoutRequest,
+  transfer: (request: CartPunchoutRequest) => Promise<boolean>,
+  respond: (result: CartPunchoutResult) => void,
+): Promise<void> {
+  let success = false;
+  try {
+    success = await transfer(request);
+  } catch (error) {
+    console.error('Failed to transfer TECSAFE positions to cart', error);
+  }
+  respond({ success });
 }
 
 export function useTecsafe() {
@@ -159,23 +197,9 @@ export function useTecsafe() {
         });
         return res.token;
       },
-      {
-        single: async (articleNumber: string, quantity: number, configurationId?: string) => {
-          try {
-            await api('/cart/items', {
-              method: 'POST',
-              body: { articleNumber, quantity, configurationId },
-            });
-            return true;
-          } catch (e) {
-            console.error('Failed to add TECSAFE item to cart', e);
-            return false;
-          }
-        },
-      },
       buildWidgetManagerConfig({
         trackingAllowed: consent.value.tracking,
-        languageRFC4647:
+        language:
           $i18n.locales.value.find((l) => l.code === $i18n.locale.value)?.language ??
           $i18n.locale.value,
         widgetBaseUrl: config.public.widgetBaseUrl,
@@ -183,11 +207,28 @@ export function useTecsafe() {
         tecsafeArticles,
       }),
     );
+    // Register synchronously: the SDK can restore a fullscreen widget in a microtask.
     manager.on(InMessageRequestArticleInfo, (e) =>
       respondToArticleInfoRequest(
         e.event.articles,
         (identifier) => fetchProductByIdentifier(api, identifier),
         (payload) => e.respond(OutMessageArticleInfo.create(payload)),
+      ),
+    );
+    manager.on(InMessageRequestLayoutPrices, (e) => {
+      e.respond(OutMessageLayoutPrices.create(calculateLayoutPrices(e.event)));
+    });
+    manager.on(InMessageCartPunchout, (e) =>
+      respondToCartPunchoutRequest(
+        e.event,
+        async (request) => {
+          const result = await api<CartPunchoutResult>('/cart/punchout', {
+            method: 'POST',
+            body: request,
+          });
+          return result.success;
+        },
+        (result) => e.respond(OutMessageCartPunchoutResult.create(result)),
       ),
     );
     return manager;
