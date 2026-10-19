@@ -53,15 +53,14 @@ export async function loadTecsafeArticles(
 }
 
 /**
- * Builds the SDK configuration. Extracted so the flag mapping is testable without a manager:
- * the demo's single whitelabel debug switch turns on both SDK debug features - the debug
- * console widget and the host-page SDK debugger overlay.
+ * Builds the SDK configuration with independent widget and host-page debugger modes.
  */
 export function buildWidgetManagerConfig(input: {
   trackingAllowed: boolean;
   language: string;
   widgetBaseUrl: string;
-  debug: boolean;
+  debugWidget: boolean;
+  sdkDebugger: boolean;
   tecsafeArticles: TecsafeArticle[];
 }): WidgetManagerConfig {
   return new WidgetManagerConfig({
@@ -72,8 +71,8 @@ export function buildWidgetManagerConfig(input: {
     taxCategories: { ...DEMO_TAX_CATEGORIES },
     widgetBaseURL: input.widgetBaseUrl,
     allowedOrigins: [new URL(input.widgetBaseUrl).origin],
-    debugWidget: input.debug,
-    sdkDebugger: input.debug,
+    debugWidget: input.debugWidget,
+    sdkDebugger: input.sdkDebugger,
     tecsafeArticles: input.tecsafeArticles,
   });
 }
@@ -203,7 +202,8 @@ export function useTecsafe() {
           $i18n.locales.value.find((l) => l.code === $i18n.locale.value)?.language ??
           $i18n.locale.value,
         widgetBaseUrl: config.public.widgetBaseUrl,
-        debug: settings.value.debugWidget,
+        debugWidget: settings.value.debugWidget,
+        sdkDebugger: settings.value.sdkDebugger,
         tecsafeArticles,
       }),
     );

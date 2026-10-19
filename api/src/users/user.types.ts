@@ -1,4 +1,6 @@
 export type ConsentSettings = {
+  version?: 'v1' | 'v2' | 'v3';
+  nativeTracking?: boolean;
   dataExchange: boolean;
   tracking: boolean;
   updatedAt: string;

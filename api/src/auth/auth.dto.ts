@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
+  IsIn,
   IsOptional,
   IsString,
   MinLength,
@@ -9,6 +10,14 @@ import {
 } from 'class-validator';
 
 export class ConsentDto {
+  @IsOptional()
+  @IsIn(['v1', 'v2', 'v3'])
+  version?: 'v1' | 'v2' | 'v3';
+
+  @IsOptional()
+  @IsBoolean()
+  nativeTracking?: boolean;
+
   @IsBoolean()
   dataExchange!: boolean;
 

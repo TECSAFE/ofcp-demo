@@ -23,6 +23,12 @@ export class AuthController {
   async register(@ShopSession() session: Session, @Body() dto: RegisterDto) {
     const consent = dto.consent
       ? {
+          ...(dto.consent.version !== undefined
+            ? { version: dto.consent.version }
+            : {}),
+          ...(dto.consent.nativeTracking !== undefined
+            ? { nativeTracking: dto.consent.nativeTracking }
+            : {}),
           dataExchange: dto.consent.dataExchange,
           tracking: dto.consent.tracking,
           updatedAt: dto.consent.updatedAt ?? new Date().toISOString(),

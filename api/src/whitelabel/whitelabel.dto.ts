@@ -30,6 +30,10 @@ export class ShareSettingsDto {
   @IsOptional()
   @IsBoolean()
   debugWidget?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  sdkDebugger?: boolean;
 }
 
 export class ShareLogoDto {

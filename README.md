@@ -122,28 +122,63 @@ per page) and wires it to the shop:
   placeholder with a "open privacy settings" action otherwise, and destroys
   the widget on consent changes / unmount.
 
-### 4. The 250 OFCP dummy items
+### 4. Generated OFCP dummy items
 
-Every shop that integrates OFCP is expected to provide **250 dummy product
-items** — or one item with 250 variants — that TECSAFE can address by
-`itemId`. They are priced 1 € to 250 € in 1 € steps (item *N* costs
-*N* €) and are normally **not visible** in the shop's search and product
-overview; they only need to resolve when requested directly by id.
+The demo generates a hidden catalog of placeholder products at API startup.
+Configure the price sequence with server environment variables (also forwarded
+by `compose.yml`):
 
-A real shop creates these during installation of the OFCP plugin. This demo
-has no installation process, so the items are generated in-memory instead
-([`dummy-items.ts`](api/src/products/dummy-items.ts), article numbers
-`OFCP-DUMMY-001` … `OFCP-DUMMY-250`) and behave exactly as the contract
-demands:
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `DUMMY_ITEM_START_PRICE` | `1` | First gross EUR price |
+| `DUMMY_ITEM_INCREASE_PERCENT` | `5` | Percentage increase from the previous price |
+| `DUMMY_ITEM_END_PRICE` | `250` | Maximum gross EUR price |
 
-- `GET /products` hides them — the shop overview stays clean.
-- `GET /products/:articleNumber` always resolves them, so the widget's
-  article-info responder (section 3) can answer TECSAFE's requests for any
-  dummy item, and `/product/OFCP-DUMMY-042` is a fully working product page.
-- `GET /products?includeDummyItems=true` injects them into the normal
-  product list. The product overview page has a demo-only toggle button
-  wired to this flag, so visitors can see what "the shop provides 250
-  hidden dummy items" actually means.
+Each next price is `previous × (1 + percentage / 100)`, rounded to cents.
+Generation stops before exceeding the end price; the item count varies.
+For example, `10`, `50`, `33.75` produces prices `10.00`, `15.00`, `22.50`,
+`33.75`. Prices must be positive with at most two decimal places, end must
+be at least start, and the percentage must advance the price by at least
+one cent. Invalid configurations or ranges exceeding 9,999 items fail at
+startup. Restart the API after changing the parameters.
+
+[`dummy-items.ts`](api/src/products/dummy-items.ts) creates article numbers
+`OFCP-DUMMY-001` onward with unique EANs. One catalog backs product lookup,
+cart pricing, and `GET /products/tecsafe-articles` for the SDK.
+
+- `GET /products` hides dummy items.
+- `GET /products/:articleNumber` and `GET /products/ean/:ean` resolve them.
+- `GET /products?includeDummyItems=true` includes them in the listing;
+  the product overview's demo toggle uses this flag.
+
+### 5. Privacy versions and demo settings
+
+Privacy settings offers three versions. The selected version and consent
+are saved in the browser and, for logged-in users, the account:
+
+- **v1 · recommended:** the required privacy settings checkbox is checked and
+  disabled; saving this version enables data exchange with TECSAFE. Optional shop and TECSAFE
+  usage tracking share one choice and remain off unless explicitly accepted.
+- **v2 · legally transparent:** data exchange is explicit; optional usage
+  tracking stays combined.
+- **v3 · a lawyer’s friend:** data exchange, TECSAFE usage tracking, and
+  native shop usage tracking are separate choices.
+
+Only the TECSAFE usage choice controls the SDK's `trackingAllowed` flag.
+The shop stores its native tracking choice without adding an analytics service.
+Existing combined choices migrate to both usage fields. Changing tabs previews
+a version; saving persists the selection. Tracking is unchecked for new visitors
+in all versions. In v1, declining optional tracking keeps required privacy settings
+enabled; in v2/v3, Decline all also declines data exchange. Previously saved
+explicit tracking choices are restored when reopening the banner. The v1 privacy
+policy link appears last and opens a demo alert in place of a real policy page.
+
+**Demo Settings** (in the footer) groups existing settings into **Branding**,
+**Debugger Settings**, and **Demo Sharing**. SDK mode enables the host-page
+SDK debugger; widget mode replaces the product configurator with the debug
+console. They can be enabled independently. Saved and shared demo settings
+include both modes; older settings with the single debug switch preserve
+their previous behavior by enabling both.
 
 ## Also in this repo (not OFCP-specific)
 

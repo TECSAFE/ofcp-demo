@@ -52,6 +52,35 @@ describe('whitelabel shares (e2e)', () => {
       .expect(401);
   });
 
+  it('shares independent SDK and widget debugger modes', async () => {
+    const server = app.getHttpServer();
+    const created = await request(server)
+      .post('/whitelabel-shares')
+      .send({
+        ...validBody(),
+        settings: { ...validBody().settings, sdkDebugger: false },
+      })
+      .expect(201);
+    const createdBody = created.body as { id: string };
+    const loaded = await request(server)
+      .get(`/whitelabel-shares/${createdBody.id}`)
+      .expect(200);
+    const loadedBody = loaded.body as {
+      settings: { debugWidget: boolean; sdkDebugger: boolean };
+    };
+    expect(loadedBody.settings).toMatchObject({
+      debugWidget: true,
+      sdkDebugger: false,
+    });
+    await request(server)
+      .post('/whitelabel-shares')
+      .send({
+        ...validBody(),
+        settings: { ...validBody().settings, sdkDebugger: 'yes' },
+      })
+      .expect(400);
+  });
+
   it('validates the payload', async () => {
     const server = app.getHttpServer();
     await request(server)

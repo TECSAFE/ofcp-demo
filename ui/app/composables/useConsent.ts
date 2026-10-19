@@ -23,7 +23,10 @@ export function useConsent() {
 
   async function reconcileWithServer(): Promise<void> {
     const { consent: server } = await api<{ consent: ConsentSettings | null }>('/consent');
-    const { effective, pushToServer } = reconcileConsentOnLogin(consent.value, server);
+    const { effective, pushToServer } = reconcileConsentOnLogin(
+      consent.value,
+      parseStoredConsent(JSON.stringify(server)),
+    );
     consent.value = effective;
     persistLocal(effective);
     if (pushToServer && effective) {
@@ -37,8 +40,11 @@ export function useConsent() {
     if (user.value) await reconcileWithServer();
   }
 
-  async function save(choice: { dataExchange: boolean; tracking: boolean }): Promise<void> {
-    const next: ConsentSettings = { ...choice, updatedAt: new Date().toISOString() };
+  async function save(choice: Omit<ConsentSettings, 'updatedAt'>): Promise<void> {
+    const next: ConsentSettings = {
+      ...choice,
+      updatedAt: new Date().toISOString(),
+    };
     consent.value = next;
     persistLocal(next);
     if (user.value) await api('/consent', { method: 'PUT', body: next });
@@ -49,5 +55,12 @@ export function useConsent() {
     bannerOpen.value = true;
   }
 
-  return { consent, bannerOpen, loadInitial, reconcileWithServer, save, openBanner };
+  return {
+    consent,
+    bannerOpen,
+    loadInitial,
+    reconcileWithServer,
+    save,
+    openBanner,
+  };
 }

@@ -9,6 +9,9 @@ const KEYS = [
   'SESSION_TTL_DAYS',
   'USER_TTL_DAYS',
   'WHITELABEL_SHARE_SECRET',
+  'DUMMY_ITEM_START_PRICE',
+  'DUMMY_ITEM_INCREASE_PERCENT',
+  'DUMMY_ITEM_END_PRICE',
 ] as const;
 
 describe('ConfigService', () => {
@@ -78,5 +81,19 @@ describe('ConfigService', () => {
   it('validate() surfaces an invalid required variable', () => {
     process.env.PORT = 'not-a-number';
     expect(() => new ConfigService().validate()).toThrow('PORT');
+  });
+
+  it('reads the dummy catalog price parameters from the environment', () => {
+    process.env.DUMMY_ITEM_START_PRICE = '10';
+    process.env.DUMMY_ITEM_INCREASE_PERCENT = '50';
+    process.env.DUMMY_ITEM_END_PRICE = '33.75';
+    const config = new ConfigService();
+    expect(config.DUMMY_ITEM_START_PRICE).toBe(10);
+    expect(config.DUMMY_ITEM_INCREASE_PERCENT).toBe(50);
+    expect(config.DUMMY_ITEM_END_PRICE).toBe(33.75);
+    process.env.DUMMY_ITEM_INCREASE_PERCENT = '0';
+    expect(() => config.DUMMY_ITEM_INCREASE_PERCENT).toThrow(
+      'DUMMY_ITEM_INCREASE_PERCENT',
+    );
   });
 });

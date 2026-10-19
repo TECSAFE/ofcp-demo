@@ -17,15 +17,12 @@ export default defineNuxtPlugin(() => {
     }
   });
 
-  // The debug switch maps to the SDK's debugWidget/sdkDebugger flags, which are
+  // Both debug switches map to SDK flags, which are
   // constructor-time settings. Tear the manager down so the PDP's own watcher rebuilds
   // it with the flags applied (this watcher is registered first, so it runs first).
-  watch(
-    () => settings.value.debugWidget,
-    async () => {
-      await tecsafe.destroy();
-    },
-  );
+  watch([() => settings.value.debugWidget, () => settings.value.sdkDebugger], async () => {
+    await tecsafe.destroy();
+  });
 
   // Login/logout: the SDK must exchange the token so TECSAFE merges guest
   // assets into the account (login) or starts a clean guest session (logout).

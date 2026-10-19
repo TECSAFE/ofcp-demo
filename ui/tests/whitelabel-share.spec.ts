@@ -55,6 +55,7 @@ describe('parseSharePayload', () => {
         primaryColor: '#b91c1c',
         surfaceColor: '#fde68a',
         debugWidget: true,
+        sdkDebugger: true,
       },
       logo: { type: 'image/png', base64: 'aGVsbG8=' },
     });
@@ -64,16 +65,35 @@ describe('parseSharePayload', () => {
     expect(parseSharePayload(payload({ logo: null }))?.logo).toBeNull();
   });
 
+  it('imports independent debug modes while preserving older shared demos', () => {
+    expect(parseSharePayload(payload())?.settings.sdkDebugger).toBe(true);
+    expect(
+      parseSharePayload(payload({ settings: { ...payload().settings, sdkDebugger: false } }))
+        ?.settings,
+    ).toMatchObject({ debugWidget: true, sdkDebugger: false });
+  });
+
   it('defaults debugWidget to false when missing or non-boolean', () => {
     expect(
       parseSharePayload(
-        payload({ settings: { shopName: 'A', primaryColor: '#b91c1c', surfaceColor: '#fde68a' } }),
+        payload({
+          settings: {
+            shopName: 'A',
+            primaryColor: '#b91c1c',
+            surfaceColor: '#fde68a',
+          },
+        }),
       )?.settings.debugWidget,
     ).toBe(false);
     expect(
       parseSharePayload(
         payload({
-          settings: { shopName: 'A', primaryColor: '#b91c1c', surfaceColor: '#fde68a', debugWidget: 'yes' },
+          settings: {
+            shopName: 'A',
+            primaryColor: '#b91c1c',
+            surfaceColor: '#fde68a',
+            debugWidget: 'yes',
+          },
         }),
       )?.settings.debugWidget,
     ).toBe(false);
@@ -84,19 +104,39 @@ describe('parseSharePayload', () => {
     expect(parseSharePayload('x')).toBeNull();
     expect(parseSharePayload({})).toBeNull();
     expect(
-      parseSharePayload(payload({ settings: { shopName: '', primaryColor: '#b91c1c', surfaceColor: '#fde68a' } })),
+      parseSharePayload(
+        payload({
+          settings: {
+            shopName: '',
+            primaryColor: '#b91c1c',
+            surfaceColor: '#fde68a',
+          },
+        }),
+      ),
     ).toBeNull();
     expect(
-      parseSharePayload(payload({ settings: { shopName: 'A', primaryColor: 'red', surfaceColor: '#fde68a' } })),
+      parseSharePayload(
+        payload({
+          settings: {
+            shopName: 'A',
+            primaryColor: 'red',
+            surfaceColor: '#fde68a',
+          },
+        }),
+      ),
     ).toBeNull();
-    expect(parseSharePayload(payload({ logo: { type: 'application/pdf', base64: 'aGVsbG8=' } }))).toBeNull();
+    expect(
+      parseSharePayload(payload({ logo: { type: 'application/pdf', base64: 'aGVsbG8=' } })),
+    ).toBeNull();
     expect(parseSharePayload(payload({ logo: { type: 'image/png' } }))).toBeNull();
   });
 });
 
 describe('share links', () => {
   it('builds the link with the wl query param', () => {
-    expect(buildShareLink('http://localhost:3000', 'abc-123')).toBe('http://localhost:3000/?wl=abc-123');
+    expect(buildShareLink('http://localhost:3000', 'abc-123')).toBe(
+      'http://localhost:3000/?wl=abc-123',
+    );
     expect(SHARE_QUERY_PARAM).toBe('wl');
   });
 

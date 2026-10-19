@@ -12,7 +12,7 @@
   },
   "footer": {
     "tagline": "TECSAFE OFCP demo shop — not a real store",
-    "shopAppearance": "Shop appearance",
+    "shopAppearance": "Demo Settings",
     "privacySettings": "Privacy settings"
   },
   "login": {
@@ -47,7 +47,7 @@
   },
   "products": {
     "title": "Products",
-    "dummyItemsExplainer": "Every shop that integrates OFCP provides 250 dummy items (or one item with 250 variants, 1–250 €) that TECSAFE can address by itemId. They are normally hidden from the shop's search and product overview. This demo has no installation process, so this button fakes the injection into the normal product list.",
+    "dummyItemsExplainer": "OFCP dummy items are generated from the server’s start price, percentage increase, and end price. TECSAFE can address them by itemId. They are normally hidden from search and the product overview; this button shows them in the demo catalog.",
     "injectDummyItems": "Inject OFCP dummy items",
     "hideDummyItems": "Hide OFCP dummy items"
   },
@@ -67,14 +67,36 @@
     "title": "Privacy settings",
     "intro": "The product configurator on this site is provided by TECSAFE. To use it, product and session data is exchanged with TECSAFE and stored in your browser. Optionally you can allow usage tracking. You can change your choice at any time via \"Privacy settings\" in the footer.",
     "allowDataExchange": "Allow data exchange with TECSAFE (required for the configurator)",
-    "allowTracking": "Allow usage tracking (optional)",
+    "allowTracking": "Allow usage tracking",
     "acceptAll": "Accept all",
     "saveSelection": "Save selection",
-    "declineAll": "Decline all"
+    "declineAll": "Decline all",
+    "versionLabel": "Privacy version",
+    "versions": {
+      "v1": {
+        "label": "v1 · recommended",
+        "description": "Required privacy settings are always enabled. Usage tracking is optional."
+      },
+      "v2": {
+        "label": "v2 · legally transparent",
+        "description": "Choose data exchange with TECSAFE explicitly. Usage tracking is optional."
+      },
+      "v3": {
+        "label": "v3 · a lawyer’s friend",
+        "description": "Choose data exchange with TECSAFE, TECSAFE usage tracking, and the shop’s own usage tracking separately."
+      }
+    },
+    "allowTecsafeTracking": "Allow TECSAFE usage tracking (optional)",
+    "allowNativeTracking": "Allow the shop’s own usage tracking (optional)",
+    "saveError": "Your choice could not be saved to your account. Please try again.",
+    "declineOptionalTracking": "Decline optional tracking",
+    "requiredPrivacy": "Required privacy settings",
+    "privacyPolicyInfo": "Check our privacy policy for more info",
+    "privacyPolicyPlaceholder": "Normally, the privacy policy would open here."
   },
   "whitelabel": {
-    "title": "Shop appearance",
-    "intro": "Whitelabel this demo shop. Your appearance is stored in this browser (local storage and IndexedDB) — nothing is uploaded unless you explicitly save it on the server below.",
+    "title": "Demo Settings",
+    "intro": "Configure branding and debugger modes for this browser. Use Demo Sharing to store these settings on the server and create a link.",
     "shopName": "Shop name",
     "logoLabel": "Logo (max 2 MB)",
     "logoPreviewAlt": "Logo preview",
@@ -85,13 +107,13 @@
     },
     "surfaceColor": "Surface color (header/footer)",
     "primaryColor": "Primary color (buttons)",
-    "debugWidget": "Enable debug widget (replaces the product configurator)",
+    "debugWidget": "Widget mode — replace the product configurator with the debug console",
     "save": "Save",
     "reset": "Reset to defaults",
     "cancel": "Cancel",
     "share": {
       "title": "Save on server & share",
-      "intro": "With the shop owner's secret, the appearance shown above can be stored on the server for a limited time. Anyone opening the link gets it applied automatically.",
+      "intro": "With the shop owner’s secret, your branding and debugger settings can be stored on the server for a limited time. Anyone opening the link gets them applied automatically.",
       "secret": "Secret",
       "duration": "Valid for (days, 1–30)",
       "submit": "Create link",
@@ -103,7 +125,14 @@
         "disabled": "Sharing is not enabled on this server.",
         "failed": "Saving on the server failed. Please try again."
       }
-    }
+    },
+    "tabs": {
+      "branding": "Branding",
+      "debugger": "Debugger Settings",
+      "sharing": "Demo Sharing"
+    },
+    "sdkDebugger": "SDK mode — show the SDK debugger overlay",
+    "debuggerIntro": "Enable each debugger independently. Saving applies the selected modes to the configurator."
   },
   "language": {
     "de": "Deutsch",

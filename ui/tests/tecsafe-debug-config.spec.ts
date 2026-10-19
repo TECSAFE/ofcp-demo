@@ -10,19 +10,35 @@ const base = {
 
 describe('buildWidgetManagerConfig', () => {
   it('leaves both SDK debug features off by default', () => {
-    const config = buildWidgetManagerConfig({ ...base, debug: false });
+    const config = buildWidgetManagerConfig({
+      ...base,
+      debugWidget: false,
+      sdkDebugger: false,
+    });
     expect(config.debugWidget).toBe(false);
     expect(config.sdkDebugger).toBe(false);
   });
 
-  it('turns on both SDK debug features from the single demo debug switch', () => {
-    const config = buildWidgetManagerConfig({ ...base, debug: true });
-    expect(config.debugWidget).toBe(true);
-    expect(config.sdkDebugger).toBe(true);
+  it.each([
+    [true, false],
+    [false, true],
+    [true, true],
+  ])('keeps widget=%s and SDK=%s debug modes independent', (debugWidget, sdkDebugger) => {
+    const config = buildWidgetManagerConfig({
+      ...base,
+      debugWidget,
+      sdkDebugger,
+    });
+    expect(config.debugWidget).toBe(debugWidget);
+    expect(config.sdkDebugger).toBe(sdkDebugger);
   });
 
   it('allows exactly the widget base URL origin', () => {
-    const config = buildWidgetManagerConfig({ ...base, debug: false });
+    const config = buildWidgetManagerConfig({
+      ...base,
+      debugWidget: false,
+      sdkDebugger: false,
+    });
     expect(config.allowedOrigins).toEqual(['https://app-ui.example.com']);
     expect(config.widgetBaseURL).toBe('https://app-ui.example.com/iframe');
   });
@@ -32,7 +48,8 @@ describe('buildWidgetManagerConfig', () => {
       ...base,
       trackingAllowed: true,
       language: 'en-US',
-      debug: false,
+      debugWidget: false,
+      sdkDebugger: false,
     });
     expect(config.trackingAllowed).toBe(true);
     expect(config.language).toBe('en-US');
@@ -45,7 +62,8 @@ describe('buildWidgetManagerConfig', () => {
     const articles = [{ productNumber: 'OFCP-DUMMY-007', price: '7.00' }];
     const config = buildWidgetManagerConfig({
       ...base,
-      debug: false,
+      debugWidget: false,
+      sdkDebugger: false,
       tecsafeArticles: articles,
     });
     expect(config.tecsafeArticles).toEqual(articles);
