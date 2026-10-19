@@ -1,2 +1,10 @@
 allowBuilds:
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - qs@6.16.0
+  - multer@2.4.0
+  - proxy-addr@2.0.8
+overrides:
+  multer@<2.4.0: ^2.4.0
+  proxy-addr@>=1.1.0 <2.0.8: ^2.0.8
+  qs@>=2.2.5 <6.16.0: ^6.16.0

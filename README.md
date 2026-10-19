@@ -349,3 +349,24 @@ saleschannel to see full configurator data.
 
     cd api && pnpm test && pnpm test:e2e
     cd ui && pnpm test && pnpm typecheck
+
+## Dependency audit exceptions
+
+The production dependency audits keep their `moderate` failure threshold.
+`ui/pnpm-workspace.yaml` excludes only these reviewed advisories for which
+no patched npm release is available:
+
+- [GHSA-vfj7-8cjw-p6xm (braces)](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm):
+  deeply nested glob patterns can exhaust the stack. The dependency is used
+  by the Nuxt/i18n build tooling with repository-controlled patterns. The demo
+  does not accept user-supplied glob patterns. `braces@3.0.3` is the latest
+  published version; the audit's suggested `3.0.4` is not published.
+- [GHSA-86w9-cpqp-85rv (node-forge)](https://github.com/advisories/GHSA-86w9-cpqp-85rv):
+  RSA PKCS#1 v1.5 signature verification can accept malformed ASN.1 data.
+  This dependency comes from listhen's local HTTPS certificate tooling;
+  the demo does not use it to verify uploaded certificates or signatures.
+  `node-forge@1.4.0` is the latest published release; the audit's suggested
+  `1.4.1` is not published.
+
+Remove an exception when a patched release can be installed. Reassess it
+before exposing the affected glob or certificate functionality to user input.
