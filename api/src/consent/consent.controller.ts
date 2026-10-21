@@ -25,6 +25,10 @@ export class ConsentController {
   async put(@ShopSession() session: Session, @Body() dto: ConsentDto) {
     if (!session.userId) throw new UnauthorizedException('Login required');
     const consent = {
+      ...(dto.version !== undefined ? { version: dto.version } : {}),
+      ...(dto.nativeTracking !== undefined
+        ? { nativeTracking: dto.nativeTracking }
+        : {}),
       dataExchange: dto.dataExchange,
       tracking: dto.tracking,
       updatedAt: dto.updatedAt ?? new Date().toISOString(),

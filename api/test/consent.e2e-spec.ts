@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { App } from 'supertest/types';
 import { createTestApp } from './create-app';
 
 type ConsentBody = {
@@ -11,7 +12,7 @@ type ConsentBody = {
 };
 
 describe('consent (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<App>;
 
   beforeAll(async () => {
     app = await createTestApp();
@@ -87,5 +88,44 @@ describe('consent (e2e)', () => {
 
     const after = (await agent.get('/consent').expect(200)).body as ConsentBody;
     expect(after.consent.tracking).toBe(true);
+  });
+
+  it('preserves the privacy version and independent usage choices through registration, updates and login', async () => {
+    const agent = request.agent(app.getHttpServer());
+    const choice = {
+      version: 'v3',
+      dataExchange: true,
+      tracking: false,
+      nativeTracking: true,
+    };
+    await agent
+      .post('/auth/register')
+      .send({
+        email: 'split@example.com',
+        password: 'secret1',
+        consent: choice,
+      })
+      .expect(201);
+    const registered = (await agent.get('/consent').expect(200))
+      .body as ConsentBody;
+    expect(registered.consent).toMatchObject(choice);
+    const updated = { ...choice, tracking: true, nativeTracking: false };
+    await agent.put('/consent').send(updated).expect(200);
+    const other = request.agent(app.getHttpServer());
+    await other
+      .post('/auth/login')
+      .send({ email: 'split@example.com', password: 'secret1' })
+      .expect(200);
+    const restored = (await other.get('/consent').expect(200))
+      .body as ConsentBody;
+    expect(restored.consent).toMatchObject(updated);
+    await other
+      .put('/consent')
+      .send({ ...choice, version: 'v4' })
+      .expect(400);
+    await other
+      .put('/consent')
+      .send({ ...choice, nativeTracking: 'yes' })
+      .expect(400);
   });
 });

@@ -3,26 +3,42 @@ import { buildWidgetManagerConfig, loadTecsafeArticles } from '../app/composable
 
 const base = {
   trackingAllowed: false,
-  languageRFC4647: 'de-DE',
+  language: 'de-DE',
   widgetBaseUrl: 'https://app-ui.example.com/iframe',
   tecsafeArticles: [{ productNumber: 'OFCP-DUMMY-001', price: '1.00' }],
 };
 
 describe('buildWidgetManagerConfig', () => {
   it('leaves both SDK debug features off by default', () => {
-    const config = buildWidgetManagerConfig({ ...base, debug: false });
+    const config = buildWidgetManagerConfig({
+      ...base,
+      debugWidget: false,
+      sdkDebugger: false,
+    });
     expect(config.debugWidget).toBe(false);
     expect(config.sdkDebugger).toBe(false);
   });
 
-  it('turns on both SDK debug features from the single demo debug switch', () => {
-    const config = buildWidgetManagerConfig({ ...base, debug: true });
-    expect(config.debugWidget).toBe(true);
-    expect(config.sdkDebugger).toBe(true);
+  it.each([
+    [true, false],
+    [false, true],
+    [true, true],
+  ])('keeps widget=%s and SDK=%s debug modes independent', (debugWidget, sdkDebugger) => {
+    const config = buildWidgetManagerConfig({
+      ...base,
+      debugWidget,
+      sdkDebugger,
+    });
+    expect(config.debugWidget).toBe(debugWidget);
+    expect(config.sdkDebugger).toBe(sdkDebugger);
   });
 
   it('allows exactly the widget base URL origin', () => {
-    const config = buildWidgetManagerConfig({ ...base, debug: false });
+    const config = buildWidgetManagerConfig({
+      ...base,
+      debugWidget: false,
+      sdkDebugger: false,
+    });
     expect(config.allowedOrigins).toEqual(['https://app-ui.example.com']);
     expect(config.widgetBaseURL).toBe('https://app-ui.example.com/iframe');
   });
@@ -31,18 +47,25 @@ describe('buildWidgetManagerConfig', () => {
     const config = buildWidgetManagerConfig({
       ...base,
       trackingAllowed: true,
-      languageRFC4647: 'en-US',
-      debug: false,
+      language: 'en-US',
+      debugWidget: false,
+      sdkDebugger: false,
     });
     expect(config.trackingAllowed).toBe(true);
-    expect(config.languageRFC4647).toBe('en-US');
-    expect(config.currencyCodeISO4217).toBe('EUR');
-    expect(config.taxIncluded).toBe(true);
+    expect(config.language).toBe('en-US');
+    expect(config.currencyCode).toBe('EUR');
+    expect(config.priceMode).toBe('gross');
+    expect(config.taxCategories).toEqual({ S: 19, AA: 7 });
   });
 
   it('passes the shop TECSAFE article list through to the SDK config', () => {
     const articles = [{ productNumber: 'OFCP-DUMMY-007', price: '7.00' }];
-    const config = buildWidgetManagerConfig({ ...base, debug: false, tecsafeArticles: articles });
+    const config = buildWidgetManagerConfig({
+      ...base,
+      debugWidget: false,
+      sdkDebugger: false,
+      tecsafeArticles: articles,
+    });
     expect(config.tecsafeArticles).toEqual(articles);
   });
 });

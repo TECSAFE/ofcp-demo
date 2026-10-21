@@ -10,6 +10,15 @@ const logoPreviewUrl = ref<string | null>(null);
 const primaryColor = ref(settings.value.primaryColor);
 const surfaceColor = ref(settings.value.surfaceColor);
 const debugWidget = ref(settings.value.debugWidget);
+const sdkDebugger = ref(settings.value.sdkDebugger);
+const activeTab = ref('branding');
+const { t } = useI18n();
+const tabs = computed(() =>
+  ['branding', 'debugger', 'sharing'].map((value) => ({
+    value,
+    label: t(`whitelabel.tabs.${value}`),
+  })),
+);
 const logoError = ref<LogoValidationError | null>(null);
 const colorsAreValid = computed(
   () => isHexColor(primaryColor.value) && isHexColor(surfaceColor.value),
@@ -38,6 +47,7 @@ watch(panelOpen, async (open) => {
   primaryColor.value = settings.value.primaryColor;
   surfaceColor.value = settings.value.surfaceColor;
   debugWidget.value = settings.value.debugWidget;
+  sdkDebugger.value = settings.value.sdkDebugger;
   logoError.value = null;
   shareError.value = null;
   shareLink.value = null;
@@ -61,6 +71,7 @@ async function onSave(): Promise<void> {
       primaryColor: primaryColor.value,
       surfaceColor: surfaceColor.value,
       debugWidget: debugWidget.value,
+      sdkDebugger: sdkDebugger.value,
     },
     logoBlob.value,
   );
@@ -84,6 +95,7 @@ async function onShare(): Promise<void> {
         primaryColor: primaryColor.value,
         surfaceColor: surfaceColor.value,
         debugWidget: debugWidget.value,
+        sdkDebugger: sdkDebugger.value,
       },
       logoBlob.value,
       shareSecret.value,
@@ -102,8 +114,14 @@ async function onShare(): Promise<void> {
 
 function onCopyLink(): void {
   if (!shareLink.value) return;
-  shareCopied.value = true;
-  navigator.clipboard.writeText(shareLink.value).then();
+  navigator.clipboard
+    .writeText(shareLink.value)
+    .then(() => {
+      shareCopied.value = true;
+    })
+    .catch(() => {
+      shareCopied.value = false;
+    });
 }
 </script>
 
@@ -113,66 +131,117 @@ function onCopyLink(): void {
     class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
     @click.self="panelOpen = false"
   >
-    <div class="flex w-full max-w-lg flex-col gap-4 rounded bg-white p-6 shadow-2xl">
-      <h2 class="text-lg font-semibold">{{ $t('whitelabel.title') }}</h2>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="demo-settings-title"
+      class="flex max-h-[90dvh] w-full max-w-xl flex-col gap-4 overflow-y-auto rounded bg-white p-6 shadow-2xl"
+    >
+      <h2 id="demo-settings-title" class="text-lg font-semibold">
+        {{ $t('whitelabel.title') }}
+      </h2>
       <p class="text-sm text-slate-600">{{ $t('whitelabel.intro') }}</p>
-      <label class="flex flex-col gap-1 text-sm">
-        <span>{{ $t('whitelabel.shopName') }}</span>
-        <input v-model="shopName" type="text" class="rounded border border-slate-400 px-2 py-1" />
-      </label>
-      <div class="flex flex-col gap-1 text-sm">
-        <span>{{ $t('whitelabel.logoLabel') }}</span>
-        <div class="flex items-center gap-3">
-          <img
-            v-if="logoPreviewUrl"
-            :src="logoPreviewUrl"
-            :alt="$t('whitelabel.logoPreviewAlt')"
-            class="h-10 max-w-40 object-contain"
-          />
-          <input type="file" accept="image/*" @change="onLogoSelected" class="border border-slate-400 rounded p-1 cursor-pointer" />
-          <button v-if="logoBlob" class="underline cursor-pointer" @click="setLogoBlob(null)">{{ $t('whitelabel.removeLogo') }}</button>
+      <SettingsTabs
+        v-model="activeTab"
+        id="demo-settings"
+        :tabs="tabs"
+        :label="$t('whitelabel.title')"
+      />
+      <div
+        v-show="activeTab === 'branding'"
+        id="demo-settings-panel-branding"
+        role="tabpanel"
+        aria-labelledby="demo-settings-tab-branding"
+        class="flex flex-col gap-4"
+      >
+        <label class="flex flex-col gap-1 text-sm">
+          <span>{{ $t('whitelabel.shopName') }}</span>
+          <input v-model="shopName" type="text" class="rounded border border-slate-400 px-2 py-1" />
+        </label>
+        <div class="flex flex-col gap-1 text-sm">
+          <span>{{ $t('whitelabel.logoLabel') }}</span>
+          <div class="flex items-center gap-3">
+            <img
+              v-if="logoPreviewUrl"
+              :src="logoPreviewUrl"
+              :alt="$t('whitelabel.logoPreviewAlt')"
+              class="h-10 max-w-40 object-contain"
+            />
+            <input
+              type="file"
+              accept="image/*"
+              @change="onLogoSelected"
+              class="border border-slate-400 rounded p-1 cursor-pointer"
+            />
+            <button v-if="logoBlob" class="underline cursor-pointer" @click="setLogoBlob(null)">
+              {{ $t('whitelabel.removeLogo') }}
+            </button>
+          </div>
+          <p v-if="logoError" class="text-sm text-red-600">
+            {{ $t('whitelabel.logoError.' + logoError) }}
+          </p>
         </div>
-        <p v-if="logoError" class="text-sm text-red-600">{{ $t('whitelabel.logoError.' + logoError) }}</p>
+        <div class="grid gap-3 text-sm sm:grid-cols-2">
+          <label class="flex flex-col gap-1">
+            <span>{{ $t('whitelabel.surfaceColor') }}</span>
+            <span class="flex items-center gap-2">
+              <input v-model="surfaceColor" type="color" class="h-9 w-12 shrink-0 cursor-pointer" />
+              <input
+                v-model="surfaceColor"
+                type="text"
+                inputmode="text"
+                maxlength="7"
+                pattern="#[0-9a-fA-F]{6}"
+                placeholder="#cbd5e1"
+                aria-label="Surface color hex value"
+                class="min-w-0 grow rounded border border-slate-400 px-2 py-1 font-mono uppercase invalid:border-red-600"
+              />
+            </span>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span>{{ $t('whitelabel.primaryColor') }}</span>
+            <span class="flex items-center gap-2">
+              <input v-model="primaryColor" type="color" class="h-9 w-12 shrink-0 cursor-pointer" />
+              <input
+                v-model="primaryColor"
+                type="text"
+                inputmode="text"
+                maxlength="7"
+                pattern="#[0-9a-fA-F]{6}"
+                placeholder="#0f172a"
+                aria-label="Primary color hex value"
+                class="min-w-0 grow rounded border border-slate-400 px-2 py-1 font-mono uppercase invalid:border-red-600"
+              />
+            </span>
+          </label>
+        </div>
       </div>
-      <div class="grid gap-3 text-sm sm:grid-cols-2">
-        <label class="flex flex-col gap-1">
-          <span>{{ $t('whitelabel.surfaceColor') }}</span>
-          <span class="flex items-center gap-2">
-            <input v-model="surfaceColor" type="color" class="h-9 w-12 shrink-0 cursor-pointer" />
-            <input
-              v-model="surfaceColor"
-              type="text"
-              inputmode="text"
-              maxlength="7"
-              pattern="#[0-9a-fA-F]{6}"
-              placeholder="#cbd5e1"
-              aria-label="Surface color hex value"
-              class="min-w-0 grow rounded border border-slate-400 px-2 py-1 font-mono uppercase invalid:border-red-600"
-            />
-          </span>
+      <div
+        v-show="activeTab === 'debugger'"
+        id="demo-settings-panel-debugger"
+        role="tabpanel"
+        aria-labelledby="demo-settings-tab-debugger"
+        class="flex flex-col gap-4"
+      >
+        <p class="text-sm text-slate-600">
+          {{ $t('whitelabel.debuggerIntro') }}
+        </p>
+        <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
+          <input v-model="sdkDebugger" type="checkbox" />
+          <span>{{ $t('whitelabel.sdkDebugger') }}</span>
         </label>
-        <label class="flex flex-col gap-1">
-          <span>{{ $t('whitelabel.primaryColor') }}</span>
-          <span class="flex items-center gap-2">
-            <input v-model="primaryColor" type="color" class="h-9 w-12 shrink-0 cursor-pointer" />
-            <input
-              v-model="primaryColor"
-              type="text"
-              inputmode="text"
-              maxlength="7"
-              pattern="#[0-9a-fA-F]{6}"
-              placeholder="#0f172a"
-              aria-label="Primary color hex value"
-              class="min-w-0 grow rounded border border-slate-400 px-2 py-1 font-mono uppercase invalid:border-red-600"
-            />
-          </span>
+        <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
+          <input v-model="debugWidget" type="checkbox" />
+          <span>{{ $t('whitelabel.debugWidget') }}</span>
         </label>
       </div>
-      <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
-        <input v-model="debugWidget" type="checkbox" />
-        <span>{{ $t('whitelabel.debugWidget') }}</span>
-      </label>
-      <div class="flex flex-col gap-2 border-t border-slate-300 pt-4 text-sm">
+      <div
+        v-show="activeTab === 'sharing'"
+        id="demo-settings-panel-sharing"
+        role="tabpanel"
+        aria-labelledby="demo-settings-tab-sharing"
+        class="flex flex-col gap-2 text-sm"
+      >
         <h3 class="font-semibold">{{ $t('whitelabel.share.title') }}</h3>
         <p class="text-slate-600">{{ $t('whitelabel.share.intro') }}</p>
         <div class="flex flex-wrap items-end gap-3">
@@ -203,7 +272,9 @@ function onCopyLink(): void {
             {{ $t('whitelabel.share.submit') }}
           </button>
         </div>
-        <p v-if="shareError" class="text-red-600">{{ $t('whitelabel.share.error.' + shareError) }}</p>
+        <p v-if="shareError" class="text-red-600">
+          {{ $t('whitelabel.share.error.' + shareError) }}
+        </p>
         <template v-if="shareLink">
           <input
             :value="shareLink"
@@ -211,7 +282,15 @@ function onCopyLink(): void {
             class="grow rounded border border-slate-400 px-2 py-1"
             @focus="($event.target as HTMLInputElement).select()"
           />
-          <p class="text-slate-600">{{ $t('whitelabel.share.expires', { date: shareExpiryText }) }}</p>
+          <button
+            class="self-start rounded border border-slate-400 px-3 py-1 cursor-pointer"
+            @click="onCopyLink"
+          >
+            {{ $t(shareCopied ? 'whitelabel.share.copied' : 'whitelabel.share.copy') }}
+          </button>
+          <p class="text-slate-600">
+            {{ $t('whitelabel.share.expires', { date: shareExpiryText }) }}
+          </p>
         </template>
       </div>
       <div class="flex flex-wrap gap-3">
@@ -219,9 +298,18 @@ function onCopyLink(): void {
           class="rounded bg-(--wl-primary) px-4 py-2 text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
           :disabled="!colorsAreValid"
           @click="onSave"
-        >{{ $t('whitelabel.save') }}</button>
-        <button class="rounded border border-slate-400 px-4 py-2 cursor-pointer" @click="reset">{{ $t('whitelabel.reset') }}</button>
-        <button class="rounded border border-slate-400 px-4 py-2 cursor-pointer" @click="panelOpen = false">{{ $t('whitelabel.cancel') }}</button>
+        >
+          {{ $t('whitelabel.save') }}
+        </button>
+        <button class="rounded border border-slate-400 px-4 py-2 cursor-pointer" @click="reset">
+          {{ $t('whitelabel.reset') }}
+        </button>
+        <button
+          class="rounded border border-slate-400 px-4 py-2 cursor-pointer"
+          @click="panelOpen = false"
+        >
+          {{ $t('whitelabel.cancel') }}
+        </button>
       </div>
     </div>
   </div>

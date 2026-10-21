@@ -4,7 +4,7 @@ export type Product = {
   name: string;
   /** Gross unit price in EUR. */
   price: number;
-  /** 0 = out of stock (matches the widget SDK's ArticleInfo semantics). */
+  /** 0 = out of stock; the SDK receives this as availableStock: false. */
   stock: number;
   description: string;
 };

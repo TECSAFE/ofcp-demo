@@ -3,6 +3,7 @@ export type WhitelabelShareSettings = {
   primaryColor: string;
   surfaceColor: string;
   debugWidget: boolean;
+  sdkDebugger?: boolean;
 };
 
 /** Raw base64 (no `data:` prefix) plus the image MIME type. */

@@ -15,7 +15,7 @@ describe('CartService', () => {
     process.env.DATA_DIR = dir;
     service = new CartService(
       new FileStoreService(new ConfigService()),
-      new ProductsService(),
+      new ProductsService(new ConfigService()),
     );
   });
 

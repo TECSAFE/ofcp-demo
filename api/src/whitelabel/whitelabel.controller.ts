@@ -43,6 +43,9 @@ export class WhitelabelController {
         primaryColor: dto.settings.primaryColor,
         surfaceColor: dto.settings.surfaceColor,
         debugWidget: dto.settings.debugWidget ?? false,
+        ...(dto.settings.sdkDebugger !== undefined
+          ? { sdkDebugger: dto.settings.sdkDebugger }
+          : {}),
       },
       logo: dto.logo ?? null,
       durationDays: dto.durationDays,

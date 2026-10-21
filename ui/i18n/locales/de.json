@@ -12,7 +12,7 @@
   },
   "footer": {
     "tagline": "TECSAFE OFCP Demo-Shop — kein echter Laden",
-    "shopAppearance": "Shop-Darstellung",
+    "shopAppearance": "Demo-Settings",
     "privacySettings": "Datenschutzeinstellungen"
   },
   "login": {
@@ -47,7 +47,7 @@
   },
   "products": {
     "title": "Produkte",
-    "dummyItemsExplainer": "Jeder Shop, der OFCP integriert, stellt 250 Dummy-Artikel bereit (oder einen Artikel mit 250 Varianten, 1–250 €), die TECSAFE über eine itemId ansprechen kann. Sie sind normalerweise in Suche und Produktübersicht des Shops nicht sichtbar. Diese Demo hat keinen Installationsprozess, daher simuliert dieser Button die Injektion in die normale Produktliste.",
+    "dummyItemsExplainer": "OFCP-Dummy-Artikel werden aus Startpreis, prozentualer Erhöhung und Endpreis des Servers generiert. TECSAFE kann sie über die itemId ansprechen. Normalerweise sind sie in Suche und Produktübersicht verborgen; dieser Button zeigt sie im Demo-Katalog an.",
     "injectDummyItems": "OFCP-Dummy-Artikel einfügen",
     "hideDummyItems": "OFCP-Dummy-Artikel ausblenden"
   },
@@ -67,14 +67,36 @@
     "title": "Datenschutzeinstellungen",
     "intro": "Der Produktkonfigurator auf dieser Seite wird von TECSAFE bereitgestellt. Zur Nutzung werden Produkt- und Sitzungsdaten mit TECSAFE ausgetauscht und in deinem Browser gespeichert. Optional kannst du Nutzungs-Tracking erlauben. Du kannst deine Auswahl jederzeit über „Datenschutzeinstellungen“ im Footer ändern.",
     "allowDataExchange": "Datenaustausch mit TECSAFE erlauben (für den Konfigurator erforderlich)",
-    "allowTracking": "Nutzungs-Tracking erlauben (optional)",
+    "allowTracking": "Nutzungs-Tracking erlauben",
     "acceptAll": "Alle akzeptieren",
     "saveSelection": "Auswahl speichern",
-    "declineAll": "Alle ablehnen"
+    "declineAll": "Alle ablehnen",
+    "versionLabel": "Datenschutz-Version",
+    "versions": {
+      "v1": {
+        "label": "v1 · empfohlen",
+        "description": "Erforderliche Datenschutzeinstellungen sind immer aktiviert. Nutzungs-Tracking ist optional."
+      },
+      "v2": {
+        "label": "v2 · rechtlich transparent",
+        "description": "Der Datenaustausch mit TECSAFE wird ausdrücklich abgefragt. Nutzungs-Tracking ist optional."
+      },
+      "v3": {
+        "label": "v3 · a lawyer’s friend",
+        "description": "Datenaustausch mit TECSAFE, TECSAFE-Nutzungs-Tracking und shop-eigenes Nutzungs-Tracking lassen sich getrennt auswählen."
+      }
+    },
+    "allowTecsafeTracking": "TECSAFE-Nutzungs-Tracking erlauben (optional)",
+    "allowNativeTracking": "Shop-eigenes Nutzungs-Tracking erlauben (optional)",
+    "saveError": "Deine Auswahl konnte nicht im Konto gespeichert werden. Bitte erneut versuchen.",
+    "declineOptionalTracking": "Optionales Tracking ablehnen",
+    "requiredPrivacy": "Erforderliche Datenschutzeinstellungen",
+    "privacyPolicyInfo": "Weitere Informationen findest du in unserer Datenschutzerklärung",
+    "privacyPolicyPlaceholder": "Normalerweise würde sich jetzt die Datenschutzerklärung öffnen."
   },
   "whitelabel": {
-    "title": "Shop-Darstellung",
-    "intro": "Gestalte diesen Demo-Shop im Whitelabel. Die Darstellung wird in diesem Browser gespeichert (Local Storage und IndexedDB) — nichts wird hochgeladen, außer du speicherst sie unten ausdrücklich auf dem Server.",
+    "title": "Demo-Settings",
+    "intro": "Passe Branding und Debugger-Modi für diesen Browser an. Unter Demo Sharing kannst du diese Einstellungen auf dem Server speichern und einen Link erstellen.",
     "shopName": "Shop-Name",
     "logoLabel": "Logo (max. 2 MB)",
     "logoPreviewAlt": "Logo-Vorschau",
@@ -85,13 +107,13 @@
     },
     "surfaceColor": "Flächenfarbe (Kopf-/Fußzeile)",
     "primaryColor": "Primärfarbe (Schaltflächen)",
-    "debugWidget": "Debug-Widget aktivieren (ersetzt den Produktkonfigurator)",
+    "debugWidget": "Widget-Modus — Produktkonfigurator durch die Debug-Konsole ersetzen",
     "save": "Speichern",
     "reset": "Auf Standard zurücksetzen",
     "cancel": "Abbrechen",
     "share": {
       "title": "Auf dem Server speichern & teilen",
-      "intro": "Mit dem Geheimnis des Shop-Betreibers kann die oben eingestellte Darstellung befristet auf dem Server gespeichert werden. Wer den Link öffnet, bekommt sie automatisch angewendet.",
+      "intro": "Mit dem Geheimnis des Shop-Betreibers kannst du Branding und Debugger-Einstellungen befristet auf dem Server speichern. Wer den Link öffnet, bekommt sie automatisch angewendet.",
       "secret": "Geheimnis",
       "duration": "Gültig für (Tage, 1–30)",
       "submit": "Link erstellen",
@@ -103,7 +125,14 @@
         "disabled": "Das Teilen ist auf diesem Server nicht aktiviert.",
         "failed": "Das Speichern auf dem Server ist fehlgeschlagen. Bitte erneut versuchen."
       }
-    }
+    },
+    "tabs": {
+      "branding": "Branding",
+      "debugger": "Debugger Settings",
+      "sharing": "Demo Sharing"
+    },
+    "sdkDebugger": "SDK-Modus — SDK-Debugger einblenden",
+    "debuggerIntro": "Die Debugger lassen sich unabhängig aktivieren. Speichern wendet die gewählten Modi auf den Konfigurator an."
   },
   "language": {
     "de": "Deutsch",

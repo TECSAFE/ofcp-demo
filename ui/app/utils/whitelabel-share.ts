@@ -49,6 +49,7 @@ export function parseSharePayload(data: unknown): WhitelabelSharePayload | null 
       primaryColor: s.primaryColor,
       surfaceColor: s.surfaceColor,
       debugWidget,
+      sdkDebugger: typeof s.sdkDebugger === 'boolean' ? s.sdkDebugger : debugWidget,
     },
     logo: parsedLogo,
   };

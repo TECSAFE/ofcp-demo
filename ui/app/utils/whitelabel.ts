@@ -3,6 +3,7 @@ export type WhitelabelSettings = {
   primaryColor: string;
   surfaceColor: string;
   debugWidget: boolean;
+  sdkDebugger: boolean;
   updatedAt: string;
 };
 
@@ -15,6 +16,7 @@ export const DEFAULT_WHITELABEL: WhitelabelSettings = {
   primaryColor: '#0f172a', // Tailwind slate-900, the shipped button color
   surfaceColor: '#cbd5e1', // Tailwind slate-300, the shipped header/footer color
   debugWidget: false,
+  sdkDebugger: false,
   updatedAt: new Date(0).toISOString(),
 };
 
@@ -47,9 +49,17 @@ export function parseStoredWhitelabel(raw: string | null): WhitelabelSettings | 
       : DEFAULT_WHITELABEL.shopName;
   return {
     shopName,
-    primaryColor: isHexColor(value.primaryColor) ? value.primaryColor : DEFAULT_WHITELABEL.primaryColor,
-    surfaceColor: isHexColor(value.surfaceColor) ? value.surfaceColor : DEFAULT_WHITELABEL.surfaceColor,
-    debugWidget: typeof value.debugWidget === 'boolean' ? value.debugWidget : DEFAULT_WHITELABEL.debugWidget,
+    primaryColor: isHexColor(value.primaryColor)
+      ? value.primaryColor
+      : DEFAULT_WHITELABEL.primaryColor,
+    surfaceColor: isHexColor(value.surfaceColor)
+      ? value.surfaceColor
+      : DEFAULT_WHITELABEL.surfaceColor,
+    debugWidget:
+      typeof value.debugWidget === 'boolean' ? value.debugWidget : DEFAULT_WHITELABEL.debugWidget,
+    // The old debug switch enabled both features; preserve that for saved demos.
+    sdkDebugger:
+      typeof value.sdkDebugger === 'boolean' ? value.sdkDebugger : value.debugWidget === true,
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : new Date(0).toISOString(),
   };
 }

@@ -13,6 +13,7 @@ const settings = (over: Partial<WhitelabelSettings> = {}): WhitelabelSettings =>
   primaryColor: '#ff0000',
   surfaceColor: '#00ff00',
   debugWidget: false,
+  sdkDebugger: false,
   updatedAt: '2026-07-21T00:00:00.000Z',
   ...over,
 });
@@ -62,13 +63,18 @@ describe('parseStoredWhitelabel', () => {
 
   it('falls back to defaults for invalid individual fields', () => {
     const parsed = parseStoredWhitelabel(
-      JSON.stringify({ shopName: '  ', primaryColor: 'red', surfaceColor: 123 }),
+      JSON.stringify({
+        shopName: '  ',
+        primaryColor: 'red',
+        surfaceColor: 123,
+      }),
     );
     expect(parsed).toEqual({
       shopName: DEFAULT_WHITELABEL.shopName,
       primaryColor: DEFAULT_WHITELABEL.primaryColor,
       surfaceColor: DEFAULT_WHITELABEL.surfaceColor,
       debugWidget: DEFAULT_WHITELABEL.debugWidget,
+      sdkDebugger: DEFAULT_WHITELABEL.sdkDebugger,
       updatedAt: new Date(0).toISOString(),
     });
   });
@@ -79,8 +85,27 @@ describe('parseStoredWhitelabel', () => {
   });
 
   it('parses debugWidget when present', () => {
-    expect(parseStoredWhitelabel(JSON.stringify(settings({ debugWidget: true })))?.debugWidget).toBe(true);
-    expect(parseStoredWhitelabel(JSON.stringify(settings({ debugWidget: false })))?.debugWidget).toBe(false);
+    expect(
+      parseStoredWhitelabel(JSON.stringify(settings({ debugWidget: true })))?.debugWidget,
+    ).toBe(true);
+    expect(
+      parseStoredWhitelabel(JSON.stringify(settings({ debugWidget: false })))?.debugWidget,
+    ).toBe(false);
+  });
+
+  it('preserves independent debug modes and migrates the old combined switch', () => {
+    expect(parseStoredWhitelabel(JSON.stringify(settings({ sdkDebugger: true })))).toMatchObject({
+      debugWidget: false,
+      sdkDebugger: true,
+    });
+    const { sdkDebugger: _drop, ...legacy } = settings({ debugWidget: true });
+    expect(parseStoredWhitelabel(JSON.stringify(legacy))).toMatchObject({
+      debugWidget: true,
+      sdkDebugger: true,
+    });
+    expect(
+      parseStoredWhitelabel(JSON.stringify(settings({ debugWidget: true, sdkDebugger: false }))),
+    ).toMatchObject({ debugWidget: true, sdkDebugger: false });
   });
 
   it('defaults debugWidget to false for missing or non-boolean values', () => {

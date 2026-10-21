@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { DEFAULT_DUMMY_ITEM_SETTINGS } from '../../products/dummy-items';
 
 /**
  * Single home for every environment read of the demo API. No variable has a
@@ -71,6 +72,27 @@ export class ConfigService {
     return this.optional('WHITELABEL_SHARE_SECRET');
   }
 
+  get DUMMY_ITEM_START_PRICE(): number {
+    return this.requirePositiveNumber(
+      'DUMMY_ITEM_START_PRICE',
+      String(DEFAULT_DUMMY_ITEM_SETTINGS.startPrice),
+    );
+  }
+
+  get DUMMY_ITEM_INCREASE_PERCENT(): number {
+    return this.requirePositiveNumber(
+      'DUMMY_ITEM_INCREASE_PERCENT',
+      String(DEFAULT_DUMMY_ITEM_SETTINGS.increasePercent),
+    );
+  }
+
+  get DUMMY_ITEM_END_PRICE(): number {
+    return this.requirePositiveNumber(
+      'DUMMY_ITEM_END_PRICE',
+      String(DEFAULT_DUMMY_ITEM_SETTINGS.endPrice),
+    );
+  }
+
   /** Touch every required getter so a bad deployment fails at boot. */
   validate(): void {
     void this.PORT;
@@ -79,6 +101,9 @@ export class ConfigService {
     void this.GUEST_SESSION_TTL_DAYS;
     void this.SESSION_TTL_DAYS;
     void this.USER_TTL_DAYS;
+    void this.DUMMY_ITEM_START_PRICE;
+    void this.DUMMY_ITEM_INCREASE_PERCENT;
+    void this.DUMMY_ITEM_END_PRICE;
     // Not a getter read: the getter tolerates absence, boot does not.
     this.require('OFCP_SALESCHANNEL_API_KEY');
   }

@@ -1,5 +1,11 @@
 <script setup lang="ts">
+import { cartItemName } from '~/utils/cart-title';
+
 const api = useApi();
+const { locale, locales } = useI18n();
+const language = computed(
+  () => locales.value.find((entry) => entry.code === locale.value)?.language ?? locale.value,
+);
 const { data, refresh } = await useAsyncData('cart', () => api<CartView>('/cart'));
 
 async function clearCart(): Promise<void> {
@@ -19,7 +25,7 @@ async function clearCart(): Promise<void> {
         class="flex items-center justify-between rounded border border-slate-300 bg-white p-4"
       >
         <div>
-          <p class="font-semibold">{{ item.name }}</p>
+          <p class="font-semibold">{{ cartItemName(item, language) }}</p>
           <p class="text-sm text-slate-600">
             {{ $t('cart.itemMeta', { article: item.articleNumber, qty: item.quantity }) }}
           </p>

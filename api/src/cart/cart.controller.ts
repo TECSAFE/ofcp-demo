@@ -11,6 +11,7 @@ import { ShopSession } from '../session/session.decorator';
 import type { Session } from '../session/session.types';
 import { AddCartItemDto } from './cart.dto';
 import { CartService } from './cart.service';
+import { CartPunchoutDto } from './cart-punchout.dto';
 
 @Controller('cart')
 export class CartController {
@@ -41,5 +42,14 @@ export class CartController {
   async clear(@ShopSession() session: Session) {
     await this.cart.clear(session.sid);
     return { ok: true };
+  }
+
+  @Post('punchout')
+  async punchout(
+    @ShopSession() session: Session,
+    @Body() dto: CartPunchoutDto,
+  ) {
+    await this.cart.addPunchout(session.sid, dto);
+    return { success: true };
   }
 }
