@@ -14,21 +14,41 @@ import {
   MaxLength,
   Min,
   ValidateIf,
+  ValidateBy,
   ValidateNested,
 } from 'class-validator';
 
 // Decimal strings as sent by SDK 0.5. Keep quantities fractional and prices finite.
 const DECIMAL = /^\d+(?:\.\d+)?$/;
+const POSITIVE_DECIMAL = /^(?=.*[1-9])\d+(?:\.\d+)?$/;
+
+/** Validate dictionary values without constraining language tags or identifier keys. */
+function IsStringRecord(allowNull = false): PropertyDecorator {
+  return ValidateBy({
+    name: 'isStringRecord',
+    validator: {
+      validate: (value: unknown) =>
+        value !== null &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        Object.values(value).every(
+          (entry) => typeof entry === 'string' || (allowNull && entry === null),
+        ),
+      defaultMessage: () =>
+        `Each value in $property must be a string${allowNull ? ' or null' : ''}`,
+    },
+  });
+}
 
 class PunchoutQuantityDto {
   @IsIn(['per-parent-unit', 'once-per-parent', 'independent'])
   relation!: 'per-parent-unit' | 'once-per-parent' | 'independent';
 
-  @Matches(DECIMAL)
+  @Matches(POSITIVE_DECIMAL)
   @MaxLength(32)
   value!: string;
 
-  @Matches(DECIMAL)
+  @Matches(POSITIVE_DECIMAL)
   @MaxLength(32)
   total!: string;
 
@@ -58,14 +78,17 @@ class PunchoutPricingDto {
 class PunchoutDescriptionDto {
   @IsObject()
   @IsNotEmptyObject()
+  @IsStringRecord()
   title!: Record<string, string>;
 
   @IsOptional()
   @IsObject()
+  @IsStringRecord()
   customerTitle?: Record<string, string>;
 
   @IsOptional()
   @IsObject()
+  @IsStringRecord(true)
   description?: Record<string, string | null>;
 }
 
@@ -82,6 +105,7 @@ export class CartPunchoutPositionDto {
   type!: 'layout' | 'tecsafeService' | 'hostShopArticle';
 
   @IsObject()
+  @IsStringRecord(true)
   identifiers!: Record<string, string | null>;
 
   @IsDefined()

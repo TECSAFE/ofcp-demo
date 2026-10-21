@@ -1,3 +1,5 @@
+import type { CartPunchoutPosition } from '@tecsafe/widget-sdk';
+
 export type Product = {
   articleNumber: string;
   ean: string;
@@ -18,6 +20,11 @@ export type CartItem = {
   articleNumber: string;
   quantity: number;
   configurationId?: string;
+  punchout?: {
+    transferId: string;
+    position: CartPunchoutPosition;
+    tecsafeTotal: number;
+  };
 };
 
 export type CartView = {

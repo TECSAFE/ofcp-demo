@@ -16,6 +16,51 @@ describe('article identifier lookup', () => {
     expect(await fetchProductByIdentifier(api, identifier)).toEqual(product);
     expect(api).toHaveBeenCalledWith(url);
   });
+
+  it('falls back through missing article numbers to GTIN', async () => {
+    const product = { articleNumber: 'OFCP-DUMMY-001' };
+    const api = vi.fn(async (url: string) => {
+      if (url === '/products/ean/4014549900010') return { product };
+      throw Object.assign(new Error('Not found'), { statusCode: 404 });
+    });
+    expect(
+      await fetchProductByIdentifier(api, {
+        manufacturerArticleNumber: 'MANUFACTURER-001',
+        supplierArticleNumber: 'SUPPLIER-001',
+        gtin: '4014549900010',
+      }),
+    ).toEqual(product);
+    expect(api.mock.calls.map(([url]) => url)).toEqual([
+      '/products/MANUFACTURER-001',
+      '/products/SUPPLIER-001',
+      '/products/ean/4014549900010',
+    ]);
+  });
+
+  it('stops at the first match and returns null when every identifier is missing', async () => {
+    const product = { articleNumber: 'SHOP-001' };
+    const api = vi.fn().mockRejectedValueOnce({ statusCode: 404 }).mockResolvedValue({ product });
+    const identifier = {
+      manufacturerArticleNumber: 'MISSING',
+      supplierArticleNumber: 'SHOP-001',
+      gtin: '4014549900010',
+    };
+    expect(await fetchProductByIdentifier(api, identifier)).toEqual(product);
+    expect(api).toHaveBeenCalledTimes(2);
+
+    const missing = vi.fn().mockRejectedValue({ response: { status: 404 } });
+    expect(await fetchProductByIdentifier(missing, identifier)).toBeNull();
+  });
+
+  it('preserves transport and server errors instead of treating them as missing products', async () => {
+    for (const error of [new Error('Network unavailable'), { statusCode: 503 }]) {
+      const api = vi.fn().mockRejectedValue(error);
+      await expect(
+        fetchProductByIdentifier(api, { manufacturerArticleNumber: 'SKU', gtin: '123' }),
+      ).rejects.toBe(error);
+      expect(api).toHaveBeenCalledTimes(1);
+    }
+  });
 });
 
 describe('cart punchout response', () => {

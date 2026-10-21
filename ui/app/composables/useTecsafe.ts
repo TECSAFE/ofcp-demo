@@ -9,6 +9,8 @@ import type {
   BaseWidget,
   CartPunchoutRequest,
   CartPunchoutResult,
+  LayoutPricesRequest,
+  LayoutPricesResponse,
 } from '@tecsafe/widget-sdk';
 import { calculateLayoutPrices, DEMO_TAX_CATEGORIES } from '../utils/tecsafe-pricing';
 
@@ -128,32 +130,49 @@ export async function respondToArticleInfoRequest(
 
 /**
  * Resolves an identifier to a product: manufacturerArticleNumber maps directly to the
- * demo's articleNumber lookup, as does supplierArticleNumber. GTIN uses the EAN endpoint.
+ * demo's articleNumber lookup, as does supplierArticleNumber. Missing article numbers
+ * fall back to the next identifier; GTIN uses the EAN endpoint.
  * Never fetches the full catalog - each identifier is looked up individually.
  */
 export async function fetchProductByIdentifier(
   api: ReturnType<typeof useApi>,
   identifier: ArticleIdentifier,
 ): Promise<Product | null> {
-  if ('manufacturerArticleNumber' in identifier && identifier.manufacturerArticleNumber) {
-    const { product } = await api<{ product: Product }>(
-      `/products/${encodeURIComponent(identifier.manufacturerArticleNumber)}`,
-    );
-    return product;
-  }
-  if (identifier.supplierArticleNumber) {
-    const { product } = await api<{ product: Product }>(
-      `/products/${encodeURIComponent(identifier.supplierArticleNumber)}`,
-    );
-    return product;
-  }
-  if (identifier.gtin) {
-    const { product } = await api<{ product: Product }>(
-      `/products/ean/${encodeURIComponent(identifier.gtin)}`,
-    );
-    return product;
+  const lookups = [
+    [identifier.manufacturerArticleNumber, '/products/'],
+    [identifier.supplierArticleNumber, '/products/'],
+    [identifier.gtin, '/products/ean/'],
+  ] as const;
+  for (const [value, prefix] of lookups) {
+    if (!value) continue;
+    try {
+      const { product } = await api<{ product: Product }>(`${prefix}${encodeURIComponent(value)}`);
+      if (product) return product;
+    } catch (error) {
+      const failure = error as { statusCode?: number; response?: { status?: number } } | null;
+      if ((failure?.statusCode ?? failure?.response?.status) !== 404) throw error;
+    }
   }
   return null;
+}
+
+/** Reply once to the requesting widget, including when price conversion fails. */
+export function respondToLayoutPricesRequest(
+  request: LayoutPricesRequest,
+  respond: (payload: LayoutPricesResponse) => void,
+): void {
+  let payload: LayoutPricesResponse;
+  try {
+    payload = calculateLayoutPrices(request);
+  } catch (error) {
+    console.error('Failed to calculate TECSAFE layout prices', error);
+    payload = {
+      requestId: request.requestId,
+      success: false,
+      error: 'Unable to calculate layout prices',
+    };
+  }
+  respond(payload);
 }
 
 /** Reply once, after the backend has accepted or rejected the complete transfer. */
@@ -215,9 +234,11 @@ export function useTecsafe() {
         (payload) => e.respond(OutMessageArticleInfo.create(payload)),
       ),
     );
-    manager.on(InMessageRequestLayoutPrices, (e) => {
-      e.respond(OutMessageLayoutPrices.create(calculateLayoutPrices(e.event)));
-    });
+    manager.on(InMessageRequestLayoutPrices, (e) =>
+      respondToLayoutPricesRequest(e.event, (payload) =>
+        e.respond(OutMessageLayoutPrices.create(payload)),
+      ),
+    );
     manager.on(InMessageCartPunchout, (e) =>
       respondToCartPunchoutRequest(
         e.event,

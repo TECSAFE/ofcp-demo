@@ -43,6 +43,7 @@ describe('calculateLayoutPrices', () => {
     const original = structuredClone(request);
     expect(calculateLayoutPrices(request)).toEqual({
       requestId: 'prices-1',
+      success: true,
       layout: {
         taxCategory: 'S',
         priceScales: [

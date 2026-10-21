@@ -2,7 +2,7 @@ allowBuilds:
   '@parcel/watcher': true
   esbuild: true
 minimumReleaseAgeExclude:
-  - '@tecsafe/widget-sdk@0.2.1 || 0.3.0 || 0.4.0 || 0.5.0'
+  - '@tecsafe/widget-sdk@0.2.1 || 0.3.0 || 0.4.0 || 0.5.0 || 0.5.1'
   - brace-expansion@2.1.7 || 5.0.12
   - postcss@8.5.23
   - undici@8.10.2

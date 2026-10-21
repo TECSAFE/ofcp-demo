@@ -116,3 +116,19 @@ jobs:
             ghcr.io/tecsafe/ofcp-demo:latest-arm64
       - name: Inspect multi-arch image
         run: docker buildx imagetools inspect ghcr.io/tecsafe/ofcp-demo:latest
+      - name: Trigger Komodo deployment
+        run: |
+          curl -fsS -X POST "https://komodo.tec-digital.de/listener/gitlab/procedure/6ad74a2062fc4757ef7c6843/main" \
+            -H "Content-Type: application/json" \
+            -H "X-Gitlab-Token: ${{ secrets.KOMODO_WEBHOOK_SECRET }}" \
+            -H "X-Gitlab-Event: Push Hook" \
+            -d '{
+              "object_kind": "push",
+              "ref": "${{ github.ref }}",
+              "before": "${{ github.event.before }}",
+              "after": "${{ github.event.after }}",
+              "repository": {
+                "name": "${{ github.event.repository.name }}",
+                "url": "${{ github.event.repository.clone_url }}"
+              }
+            }'

@@ -90,7 +90,7 @@ per page) and wires it to the shop:
     from `GET /products/:articleNumber`, always responding — even
     `info: null` for unknown articles — so the widget never times out
     waiting for product data.
-- SDK **0.5.0** uses a two-argument manager constructor and three business
+- SDK **0.5.1** uses a two-argument manager constructor and three business
   event handlers, registered synchronously before any widget starts:
   - **Article info** echoes the complete identifier (`gtin`,
     `manufacturerArticleNumber`, or `supplierArticleNumber`) and returns
@@ -99,13 +99,17 @@ per page) and wires it to the shop:
   - **Layout prices** converts incoming net EUR layout and service prices to
     gross EUR using the session's tax categories (`S`: 19%, `AA`: 7%). It
     preserves quantity scales, discounts, request IDs, and service IDs.
+    Every request receives one response: `success: true` with converted prices,
+    or `success: false` with the original request ID and an error message if
+    conversion fails. Failed responses omit all layout and service prices.
   - **Cart punchout** sends the complete transfer to `POST /cart/punchout`
     and replies once with `cart-punchout-result` after acceptance or failure.
     The API validates the batch and stores all positions in one update,
     retaining parent links, identifiers, quantities, pricing, and metadata.
     The cart displays supplied titles and line totals; the API also exposes
-    effective unit prices.
-    repeated transfers stay separate. Ordinary shop additions still use
+    effective unit prices. Each transfer receives its own `transferId`, and
+    punchout positions are kept separate across repeated transfers.
+    Ordinary shop additions still use
     `POST /cart/items`.
   Session configuration uses `language`, `currencyCode: 'EUR'`,
   `priceMode: 'gross'`, and the same `taxCategories` as layout-price conversion.

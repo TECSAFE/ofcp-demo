@@ -1,9 +1,13 @@
-import type { LayoutPricesRequest, LayoutPricesResponse, UnitPricing } from '@tecsafe/widget-sdk';
+import type {
+  LayoutPricesRequest,
+  LayoutPricesSuccessResponse,
+  UnitPricing,
+} from '@tecsafe/widget-sdk';
 
 export const DEMO_TAX_CATEGORIES = { S: 19, AA: 7 };
 
 /** The demo sells in gross EUR; the SDK always supplies layout prices in net EUR. */
-export function calculateLayoutPrices(request: LayoutPricesRequest): LayoutPricesResponse {
+export function calculateLayoutPrices(request: LayoutPricesRequest): LayoutPricesSuccessResponse {
   function grossPricing(pricing: UnitPricing, taxCategory: string): UnitPricing {
     const rate = DEMO_TAX_CATEGORIES[taxCategory as keyof typeof DEMO_TAX_CATEGORIES];
     if (!Object.hasOwn(DEMO_TAX_CATEGORIES, taxCategory))
@@ -29,6 +33,7 @@ export function calculateLayoutPrices(request: LayoutPricesRequest): LayoutPrice
   }
   return {
     requestId: request.requestId,
+    success: true,
     layout: {
       taxCategory: request.layout.taxCategory,
       priceScales: request.layout.priceScales.map((scale) => ({

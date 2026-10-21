@@ -45,9 +45,9 @@ export function useConsent() {
       ...choice,
       updatedAt: new Date().toISOString(),
     };
+    if (user.value) await api('/consent', { method: 'PUT', body: next });
     consent.value = next;
     persistLocal(next);
-    if (user.value) await api('/consent', { method: 'PUT', body: next });
     bannerOpen.value = false;
   }
 

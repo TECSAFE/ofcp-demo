@@ -137,6 +137,63 @@ describe('cart (e2e)', () => {
     expect(((await agent.get('/cart')).body as CartView).items).toHaveLength(0);
   });
 
+  it('accepts free positions and preserves extensible metadata and nullable text', async () => {
+    const agent = request.agent(app.getHttpServer());
+    const free = {
+      ...layout,
+      identifiers: { itemID: 'FREE', hostShopArticleNumber: null },
+      description: { ...layout.description, description: { en: null } },
+      pricing: {
+        unitPrice: '0',
+        effectiveUnitPrice: '0.00',
+        lineAmount: '0',
+        allowancesAndCharges: [],
+      },
+      meta: { custom: { nested: ['anything', 1] } },
+    };
+    await agent
+      .post('/cart/punchout')
+      .send({ positions: [free], tecsafeTotal: 0 })
+      .expect(201);
+    const cart = (await agent.get('/cart').expect(200)).body as CartView;
+    expect(cart.items[0]).toMatchObject({
+      articleNumber: 'FREE',
+      lineTotal: 0,
+      punchout: { position: free },
+    });
+  });
+
+  it.each([
+    { ...layout, identifiers: { hostShopArticleNumber: { nested: 'bad' } } },
+    { ...layout, identifiers: { itemID: 123 } },
+    { ...layout, description: { title: { en: { nested: 'bad' } } } },
+    { ...layout, description: { title: { en: null } } },
+    {
+      ...layout,
+      description: { ...layout.description, customerTitle: { en: 123 } },
+    },
+    {
+      ...layout,
+      description: { ...layout.description, description: { en: {} } },
+    },
+    ...['0', '0.00'].flatMap((zero) => [
+      { ...layout, quantity: { ...layout.quantity, total: zero } },
+      { ...layout, quantity: { ...layout.quantity, value: zero } },
+    ]),
+  ])('rejects invalid field values atomically: %j', async (invalid) => {
+    const agent = request.agent(app.getHttpServer());
+    await agent
+      .post('/cart/punchout')
+      .send({
+        positions: [layout, { ...invalid, positionId: 'invalid' }],
+        tecsafeTotal: 21.42,
+      })
+      .expect(400);
+    expect(
+      ((await agent.get('/cart').expect(200)).body as CartView).items,
+    ).toHaveLength(0);
+  });
+
   it.each([
     {
       positions: [{ ...layout, quantity: [layout.quantity] }],
