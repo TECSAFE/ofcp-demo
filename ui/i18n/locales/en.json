@@ -13,7 +13,8 @@
   "footer": {
     "tagline": "TECSAFE OFCP demo shop — not a real store",
     "shopAppearance": "Demo Settings",
-    "privacySettings": "Privacy settings"
+    "privacySettings": "Privacy settings",
+    "openEditor": "Open editor"
   },
   "login": {
     "title": "Login",

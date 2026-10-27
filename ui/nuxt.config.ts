@@ -33,9 +33,11 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      // Override with NUXT_PUBLIC_API_BASE / NUXT_PUBLIC_WIDGET_BASE_URL.
+      // Override with NUXT_PUBLIC_API_BASE / NUXT_PUBLIC_WIDGET_BASE_URL / NUXT_PUBLIC_EDITOR_URL.
       apiBase: '/api',
       widgetBaseUrl: 'https://app-ui.tecsafe.de/iframe',
+      // OFCP editor opened as the SDK fullscreen app from the footer; empty hides the button.
+      editorUrl: 'https://ofcp-editor.staging.tecsafe.de',
     },
   },
 })

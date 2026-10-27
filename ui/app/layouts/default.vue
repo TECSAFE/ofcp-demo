@@ -2,6 +2,8 @@
 const { user, logout } = useAuth();
 const { openBanner } = useConsent();
 const { settings, logoUrl, openPanel } = useWhitelabel();
+const { openEditor } = useTecsafe();
+const editorUrl = useRuntimeConfig().public.editorUrl;
 
 async function onLogout(): Promise<void> {
   await logout();
@@ -43,6 +45,7 @@ async function onLogout(): Promise<void> {
       <div class="mx-auto flex max-w-5xl items-center justify-between p-4 text-sm">
         <span>{{ $t('footer.tagline') }}</span>
         <div class="flex items-center gap-4">
+          <button v-if="editorUrl" class="underline cursor-pointer" @click="openEditor">{{ $t('footer.openEditor') }}</button>
           <button class="underline cursor-pointer" @click="openPanel">{{ $t('footer.shopAppearance') }}</button>
           <button class="underline cursor-pointer" @click="openBanner">{{ $t('footer.privacySettings') }}</button>
           <LanguageSwitcher />

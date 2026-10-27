@@ -285,6 +285,9 @@ templates):
 - UI/runtime defaults:
   `NUXT_PUBLIC_API_BASE=/api`,
   `NUXT_PUBLIC_WIDGET_BASE_URL=https://app-ui.tecsafe.de/iframe`,
+  `NUXT_PUBLIC_EDITOR_URL=https://ofcp-editor.staging.tecsafe.de` (the OFCP
+  editor the footer "Open editor" button opens as the SDK fullscreen app;
+  its origin is added to the SDK `allowedOrigins`, empty hides the button),
   `API_PROXY_TARGET=http://localhost:4000` (dev server) /
   `http://127.0.0.1:4000` (Docker image).
 Runtime data lives in
