@@ -5,6 +5,7 @@ const base = {
   trackingAllowed: false,
   language: 'de-DE',
   widgetBaseUrl: 'https://app-ui.example.com/iframe',
+  editorUrl: '',
   tecsafeArticles: [{ productNumber: 'OFCP-DUMMY-001', price: '1.00' }],
 };
 
@@ -33,7 +34,17 @@ describe('buildWidgetManagerConfig', () => {
     expect(config.sdkDebugger).toBe(sdkDebugger);
   });
 
-  it('allows exactly the widget base URL origin', () => {
+  it('allows the widget base URL and editor origins for the fullscreen app', () => {
+    const config = buildWidgetManagerConfig({
+      ...base,
+      editorUrl: 'https://editor.example.com/some/path',
+      debugWidget: false,
+      sdkDebugger: false,
+    });
+    expect(config.allowedOrigins).toEqual(['https://app-ui.example.com', 'https://editor.example.com']);
+  });
+
+  it('allows exactly the widget base URL origin without an editor URL', () => {
     const config = buildWidgetManagerConfig({
       ...base,
       debugWidget: false,

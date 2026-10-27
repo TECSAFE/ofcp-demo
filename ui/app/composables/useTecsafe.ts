@@ -61,6 +61,8 @@ export function buildWidgetManagerConfig(input: {
   trackingAllowed: boolean;
   language: string;
   widgetBaseUrl: string;
+  /** OFCP editor opened as the SDK fullscreen app; empty disables it. */
+  editorUrl: string;
   debugWidget: boolean;
   sdkDebugger: boolean;
   tecsafeArticles: TecsafeArticle[];
@@ -72,7 +74,10 @@ export function buildWidgetManagerConfig(input: {
     priceMode: 'gross',
     taxCategories: { ...DEMO_TAX_CATEGORIES },
     widgetBaseURL: input.widgetBaseUrl,
-    allowedOrigins: [new URL(input.widgetBaseUrl).origin],
+    allowedOrigins: [
+      new URL(input.widgetBaseUrl).origin,
+      ...(input.editorUrl ? [new URL(input.editorUrl).origin] : []),
+    ],
     debugWidget: input.debugWidget,
     sdkDebugger: input.sdkDebugger,
     tecsafeArticles: input.tecsafeArticles,
@@ -193,7 +198,7 @@ export async function respondToCartPunchoutRequest(
 export function useTecsafe() {
   const config = useRuntimeConfig();
   const api = useApi();
-  const { consent } = useConsent();
+  const { consent, openBanner } = useConsent();
   const { $i18n } = useNuxtApp();
   const { settings } = useWhitelabel();
 
@@ -221,6 +226,7 @@ export function useTecsafe() {
           $i18n.locales.value.find((l) => l.code === $i18n.locale.value)?.language ??
           $i18n.locale.value,
         widgetBaseUrl: config.public.widgetBaseUrl,
+        editorUrl: config.public.editorUrl,
         debugWidget: settings.value.debugWidget,
         sdkDebugger: settings.value.sdkDebugger,
         tecsafeArticles,
@@ -261,6 +267,15 @@ export function useTecsafe() {
     return ensureManager().createDebugWidget(el);
   }
 
+  function openEditor(): void {
+    // Without data-exchange consent there is no manager; ask for consent instead.
+    if (!consent.value?.dataExchange) {
+      openBanner();
+      return;
+    }
+    ensureManager().openFullScreen(config.public.editorUrl);
+  }
+
   async function destroy(): Promise<void> {
     if (!manager) return;
     const current = manager;
@@ -274,5 +289,5 @@ export function useTecsafe() {
     await manager?.refreshToken();
   }
 
-  return { ensureManager, createDebugWidget, destroy, refreshToken };
+  return { ensureManager, createDebugWidget, openEditor, destroy, refreshToken };
 }
