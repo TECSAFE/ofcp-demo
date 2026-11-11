@@ -26,30 +26,40 @@ the widget SDK composable wires the shop's data into TECSAFE's iframe.
 
 [`TecsafeService`](api/src/tecsafe/tecsafe.service.ts) implements OFCP's
 two-step JWT exchange, called from
-[`POST /tecsafe/token`](api/src/tecsafe/tecsafe.controller.ts):
+[`POST /tecsafe/token`](api/src/tecsafe/tecsafe.controller.ts). Both steps
+are plain OAuth2 `client_credentials` requests to the token endpoint of
+TECSAFE's identity provider (Authentik); the shop never calls the api-gateway
+for a credential. Authentik calls the api-gateway back while issuing, which is
+where a customer can be refused (the shop then sees `400 invalid_grant`).
 
-1. [`getSaleschannelToken()`](api/src/tecsafe/tecsafe.service.ts#L22-L56) —
-   exchanges the shop's static `OFCP_SALESCHANNEL_API_KEY` for a
-   saleschannel-level JWT (`POST /v1/auth/jwt/saleschannel`). This token is
-   cached in memory until ~60s before its `expires_in`, so it isn't
-   re-fetched on every request.
-2. [`exchangeCustomerToken()`](api/src/tecsafe/tecsafe.service.ts#L58-L96) —
-   exchanges that saleschannel JWT for a customer-scoped JWT
-   (`POST /v1/auth/jwt/saleschannel-customer`), the one the widget SDK
-   actually uses. For a guest this carries no `customerPayload`; for a
+1. [`getSaleschannelToken()`](api/src/tecsafe/tecsafe.service.ts) — logs the
+   shop in with its service account (`username` + `password` = the app
+   password) at the saleschannel client id and gets a saleschannel-level JWT
+   (15 min). It is cached in memory until ~60s before its `expires_in`, so it
+   isn't re-fetched on every request.
+2. [`exchangeCustomerToken()`](api/src/tecsafe/tecsafe.service.ts) —
+   derives a customer-scoped JWT (5 min), the one the widget SDK actually
+   uses: a `client_credentials` request at the customer client id that is
+   authenticated by the saleschannel JWT as `client_assertion`
+   (`client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer`)
+   and carries the shopper description as the JSON form field
+   `ofcp_customer`. For a guest this has no `customerPayload`; for a
    logged-in shopper it carries `{ saleschannelCustomerID,
    saleschannelCustomerEmail }` taken from the shop's own session
-   ([`tecsafe.controller.ts:17-25`](api/src/tecsafe/tecsafe.controller.ts#L17-L25)).
+   ([`tecsafe.controller.ts`](api/src/tecsafe/tecsafe.controller.ts)).
    The widget SDK's previous token is always forwarded as
    `previousSaleschannelCustomerJwt` so TECSAFE merges guest assets
    (configurations, cart) into the account on login and starts a clean guest
    session on logout.
 
 Configuration lives in
-[`ConfigService`](api/src/shared/config/config.service.ts): `OFCP_GATEWAY_URL`
-(the api-gateway to talk to), `OFCP_SALESCHANNEL_API_KEY`,
-and `GUEST_SESSION_TTL_DAYS`, which is dual-purpose:
-it also becomes the `guestSessionTTL` sent in the exchange body.
+[`ConfigService`](api/src/shared/config/config.service.ts): the five values
+the TECSAFE cockpit shows once when a partner issues the shop's credentials
+(Saleschannel → Credentials → Issue) — `OFCP_TOKEN_URL`,
+`OFCP_SERVICE_ACCOUNT`, `OFCP_SERVICE_ACCOUNT_TOKEN`,
+`OFCP_SALESCHANNEL_CLIENT_ID`, `OFCP_CUSTOMER_CLIENT_ID` — and
+`GUEST_SESSION_TTL_DAYS`, which is dual-purpose: it also becomes the
+`guestSessionTTL` sent in `ofcp_customer`.
 
 ### 2. Consent gates the widget, not just a cookie banner
 
@@ -208,8 +218,14 @@ protocol itself:
 ## Prerequisites
 
 - Node 22 + pnpm
-- A TECSAFE saleschannel API key (created in the cockpit's salesChannels
-  settings; dev seed key of a local ofcp stack: `tds_sc_eshop_dev_key`)
+- The shop's TECSAFE credentials: issued by the partner in the cockpit
+  (Saleschannel → Credentials → Issue), shown once — username, token (app
+  password), token URL and the two client ids. A local ofcp stack has them
+  for the seeded eShop in its root `.env` (`SALESCHANNEL_ESHOP_DEV_APP_PASSWORD`,
+  `SALESCHANNEL_OIDC_CLIENT_ID`, `SALESCHANNEL_CUSTOMER_OIDC_CLIENT_ID`,
+  service account `sc-019d44a8-3e97-71e6-938a-c172af4d96a2-development`,
+  token URL `https://ofcp-authentik.tecsafe-local.de/application/o/token/`);
+  the ofcp repo's `compose.tool.demo-shop.yml` wires them in.
 - Optional: a local app-ui instance for local iframe testing (see below).
   By default, the demo uses `https://app-ui.tecsafe.de/iframe`.
 
@@ -233,20 +249,25 @@ files).
 
 Root `pnpm dev` defaults:
 
-- `OFCP_SALESCHANNEL_API_KEY=tds_sc_eshop_dev_key`
-- `OFCP_GATEWAY_URL=https://ofcp-api-gateway.staging.tecsafe.de`
+- `OFCP_TOKEN_URL=https://auth.tec-digital.de/application/o/token/` (the
+  shared Authentik of testing/staging/production)
 
-Example with explicit overrides:
+The credentials have no default — they are issued per saleschannel and stage:
 
-    OFCP_SALESCHANNEL_API_KEY=<key> OFCP_GATEWAY_URL=<gateway-url> pnpm dev
+    OFCP_SERVICE_ACCOUNT=<username> OFCP_SERVICE_ACCOUNT_TOKEN=<token> \
+    OFCP_SALESCHANNEL_CLIENT_ID=<id> OFCP_CUSTOMER_CLIENT_ID=<id> pnpm dev
+
+Against a local ofcp stack add `OFCP_TOKEN_URL=https://ofcp-authentik.tecsafe-local.de/application/o/token/`.
+Its `*.tecsafe-local.de` certificate is publicly trusted, so no TLS setting is needed; never disable
+certificate checks with `NODE_TLS_REJECT_UNAUTHORIZED=0`.
 
 ## Running (three terminals)
 
     # 1 — API on :4000
     cd api && pnpm install
-    OFCP_SALESCHANNEL_API_KEY=<key> pnpm start:dev
-    # optional: OFCP_GATEWAY_URL=http://localhost:8080 for a local ofcp stack
-    # (api-only default gateway without override: http://localhost:4000)
+    OFCP_TOKEN_URL=<token-url> OFCP_SERVICE_ACCOUNT=<username> \
+    OFCP_SERVICE_ACCOUNT_TOKEN=<token> OFCP_SALESCHANNEL_CLIENT_ID=<id> \
+    OFCP_CUSTOMER_CLIENT_ID=<id> pnpm start:dev
 
     # 2 — optional: local app-ui (widget iframes) on :3002
     cd ../app-ui/nuxt && pnpm install && pnpm dev --port 3002
@@ -272,16 +293,16 @@ Environment variables are now default-driven (no committed `.env.example`
 templates):
 
 - Compose defaults (`compose.yml`):
-  `OFCP_GATEWAY_URL=https://ofcp-api-gateway.staging.tecsafe.de`,
+  `OFCP_TOKEN_URL=https://auth.tec-digital.de/application/o/token/`,
   `NUXT_PUBLIC_WIDGET_BASE_URL=https://app-ui.tecsafe.de`,
-  `OFCP_SALESCHANNEL_API_KEY=tds_sc_eshop_dev_key`,
   `WHITELABEL_SHARE_SECRET=` (empty = sharing disabled).
 - API code defaults (`ConfigService`) for standalone API runs:
-  `PORT=4000`, `DATA_DIR=./data`, `OFCP_GATEWAY_URL=http://localhost:4000`,
+  `PORT=4000`, `DATA_DIR=./data`,
   `GUEST_SESSION_TTL_DAYS=1`, `SESSION_TTL_DAYS=2`, `USER_TTL_DAYS=7`.
-- API required without a code default:
-  `OFCP_SALESCHANNEL_API_KEY` (the API fails at boot if missing when run
-  directly without the root/compose defaults).
+- API required without a code default (the API fails at boot if one is
+  missing): `OFCP_TOKEN_URL`, `OFCP_SERVICE_ACCOUNT`,
+  `OFCP_SERVICE_ACCOUNT_TOKEN`, `OFCP_SALESCHANNEL_CLIENT_ID`,
+  `OFCP_CUSTOMER_CLIENT_ID`.
 - UI/runtime defaults:
   `NUXT_PUBLIC_API_BASE=/api`,
   `NUXT_PUBLIC_WIDGET_BASE_URL=https://app-ui.tecsafe.de/iframe`,
@@ -317,7 +338,8 @@ saleschannel to see full configurator data.
    widget iframe loads on the PDP; `tecsafe-token` + `tecsafe-bid` appear in
    localStorage.
 3. **Guest token:** DevTools network → `POST /tecsafe/token` returns a JWT;
-   its payload (base64) has no `customerPayload` and `sub` ends in `:guest`.
+   its payload (base64) has `x-ofcp.customerType: "guest"` and a generated
+   `saleschannelCustomerID`.
 4. **Add to cart:** configure in the widget / add via widget button → item
    appears on the cart page (configured items show their configurationId).
 5. **Consent transfer (guest → register):** as a guest with consent chosen,
@@ -327,9 +349,10 @@ saleschannel to see full configurator data.
    different/no consent), log in with that account → the account's consent
    replaces the local one; the banner stays closed.
 7. **Session upgrade (login):** while logged in, `POST /tecsafe/token`
-   responses carry `customerPayload` with your user id/email, and the
-   request forwarded the previous guest token
-   (`previousSaleschannelCustomerJwt`) — TECSAFE merges the guest assets.
+   responses carry `x-ofcp.customerType: "registered"` with your user id as
+   `saleschannelCustomerID`, and the API forwarded the previous guest token
+   (`previousSaleschannelCustomerJwt` inside `ofcp_customer`) — TECSAFE
+   merges the guest assets.
 8. **Logout:** header Logout → next token request is a guest token again;
    consent in this browser stays as chosen.
 9. **Consent withdrawal:** "Privacy settings" → decline data exchange →

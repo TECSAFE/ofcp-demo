@@ -11,7 +11,11 @@ export async function createTestApp(
   overrides?: (builder: TestingModuleBuilder) => TestingModuleBuilder,
 ): Promise<INestApplication<App>> {
   process.env.DATA_DIR = await mkdtemp(join(tmpdir(), 'ofcp-demo-e2e-'));
-  process.env.OFCP_GATEWAY_URL ??= 'https://gateway.test';
+  process.env.OFCP_TOKEN_URL ??= 'https://auth.test/application/o/token/';
+  process.env.OFCP_SERVICE_ACCOUNT ??= 'sc-shop-test';
+  process.env.OFCP_SERVICE_ACCOUNT_TOKEN ??= 'app-password';
+  process.env.OFCP_SALESCHANNEL_CLIENT_ID ??= 'sc-client-id';
+  process.env.OFCP_CUSTOMER_CLIENT_ID ??= 'customer-client-id';
   process.env.GUEST_SESSION_TTL_DAYS ??= '7';
   process.env.SESSION_TTL_DAYS ??= '30';
   process.env.USER_TTL_DAYS ??= '90';

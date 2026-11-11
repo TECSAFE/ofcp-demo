@@ -40,13 +40,6 @@ export class ConfigService {
     return this.require('DATA_DIR', './data');
   }
 
-  get OFCP_GATEWAY_URL(): string {
-    return this.require('OFCP_GATEWAY_URL', 'http://localhost:4000').replace(
-      /\/+$/,
-      '',
-    );
-  }
-
   get GUEST_SESSION_TTL_DAYS(): number {
     return this.requirePositiveNumber('GUEST_SESSION_TTL_DAYS', '1');
   }
@@ -60,11 +53,35 @@ export class ConfigService {
   }
 
   /**
-   * Absent-tolerant at request time so /tecsafe endpoints answer 503 instead
-   * of crashing; validate() still requires it, so a real boot fails fast.
+   * The shop's OFCP credentials, all five handed out once by the cockpit
+   * (Saleschannel → Credentials → Issue). Absent-tolerant at request time so
+   * /tecsafe endpoints answer 503 instead of crashing; validate() still
+   * requires them, so a real boot fails fast.
    */
-  get OFCP_SALESCHANNEL_API_KEY(): string | undefined {
-    return this.optional('OFCP_SALESCHANNEL_API_KEY');
+
+  /** Authentik's token endpoint, the full URL (`https://<authentik>/application/o/token/`). */
+  get OFCP_TOKEN_URL(): string | undefined {
+    return this.optional('OFCP_TOKEN_URL');
+  }
+
+  /** Username of the shop's Authentik service account (`sc-<saleschannelId>-<stage>`). */
+  get OFCP_SERVICE_ACCOUNT(): string | undefined {
+    return this.optional('OFCP_SERVICE_ACCOUNT');
+  }
+
+  /** The service account's app password. */
+  get OFCP_SERVICE_ACCOUNT_TOKEN(): string | undefined {
+    return this.optional('OFCP_SERVICE_ACCOUNT_TOKEN');
+  }
+
+  /** Client id of the saleschannel provider (the shop's own tokens). */
+  get OFCP_SALESCHANNEL_CLIENT_ID(): string | undefined {
+    return this.optional('OFCP_SALESCHANNEL_CLIENT_ID');
+  }
+
+  /** Client id of the saleschannel-customer provider (the per-shopper tokens the widget uses). */
+  get OFCP_CUSTOMER_CLIENT_ID(): string | undefined {
+    return this.optional('OFCP_CUSTOMER_CLIENT_ID');
   }
 
   /** Optional by design: POST /whitelabel-shares answers 503 until this is set. */
@@ -97,14 +114,17 @@ export class ConfigService {
   validate(): void {
     void this.PORT;
     void this.DATA_DIR;
-    void this.OFCP_GATEWAY_URL;
     void this.GUEST_SESSION_TTL_DAYS;
     void this.SESSION_TTL_DAYS;
     void this.USER_TTL_DAYS;
     void this.DUMMY_ITEM_START_PRICE;
     void this.DUMMY_ITEM_INCREASE_PERCENT;
     void this.DUMMY_ITEM_END_PRICE;
-    // Not a getter read: the getter tolerates absence, boot does not.
-    this.require('OFCP_SALESCHANNEL_API_KEY');
+    // Not getter reads: the getters tolerate absence, boot does not.
+    this.require('OFCP_TOKEN_URL');
+    this.require('OFCP_SERVICE_ACCOUNT');
+    this.require('OFCP_SERVICE_ACCOUNT_TOKEN');
+    this.require('OFCP_SALESCHANNEL_CLIENT_ID');
+    this.require('OFCP_CUSTOMER_CLIENT_ID');
   }
 }
