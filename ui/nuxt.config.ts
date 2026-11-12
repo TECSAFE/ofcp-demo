@@ -30,6 +30,8 @@ export default defineNuxtConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    // The OFCP stack serves the dev server behind Traefik; Vite rejects unknown hosts otherwise.
+    server: { allowedHosts: ['.tecsafe-local.de'] },
   },
   runtimeConfig: {
     public: {
