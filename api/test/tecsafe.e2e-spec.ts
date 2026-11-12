@@ -2,45 +2,50 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createTestApp } from './create-app';
 
+/** Decodes the form body of a mocked token request. */
+const formOf = (call: unknown[]): Record<string, string> =>
+  Object.fromEntries(
+    new URLSearchParams((call[1] as { body: string }).body).entries(),
+  );
+
 describe('tecsafe token (e2e)', () => {
   let app: INestApplication;
   const fetchMock = jest.fn();
 
   beforeAll(async () => {
-    process.env.OFCP_GATEWAY_URL = 'https://gateway.test';
-    process.env.OFCP_SALESCHANNEL_API_KEY = 'tds_sc_test_key';
     app = await createTestApp();
     global.fetch = fetchMock;
   });
 
   beforeEach(() => {
     fetchMock.mockReset();
-    fetchMock.mockImplementation((url: string) =>
-      Promise.resolve({
+    // Authentik's token endpoint answers both the shop login (username/password)
+    // and the customer exchange (client_assertion); tell them apart by the form.
+    fetchMock.mockImplementation((_url: string, init: { body: string }) => {
+      const form = new URLSearchParams(init.body);
+      const isLogin = form.has('username');
+      return Promise.resolve({
         ok: true,
+        status: 200,
         json: () =>
-          Promise.resolve(
-            url.endsWith('/saleschannel')
-              ? {
-                  access_token: 'sc-token',
-                  token_type: 'Bearer',
-                  expires_in: 900,
-                  scope: '',
-                }
-              : {
-                  access_token: 'customer-token',
-                  token_type: 'Bearer',
-                  expires_in: 3600,
-                  scope: '',
-                },
-          ),
-      }),
-    );
+          Promise.resolve({
+            access_token: isLogin ? 'sc-token' : 'customer-token',
+            token_type: 'Bearer',
+            expires_in: isLogin ? 900 : 300,
+            scope: 'ofcp',
+          }),
+      });
+    });
   });
 
   afterAll(async () => {
     await app.close();
   });
+
+  const customerCall = () =>
+    fetchMock.mock.calls.find(
+      (call) => 'client_assertion' in formOf(call as unknown[]),
+    ) as unknown[] | undefined;
 
   it('mints a guest token for anonymous sessions', async () => {
     const agent = request.agent(app.getHttpServer());
@@ -51,15 +56,14 @@ describe('tecsafe token (e2e)', () => {
     const resBody = res.body as { token: string };
     expect(resBody.token).toBe('customer-token');
 
-    const exchangeCall = fetchMock.mock.calls.find(([url]) =>
-      (url as string).endsWith('/saleschannel-customer'),
-    ) as [string, { body: string }] | undefined;
-    const body = JSON.parse(exchangeCall![1].body) as {
+    const form = formOf(customerCall()!);
+    expect(form.client_assertion).toBe('sc-token');
+    const customer = JSON.parse(form.ofcp_customer) as {
       customerPayload?: unknown;
       previousSaleschannelCustomerJwt?: string;
     };
-    expect(body.customerPayload).toBeUndefined();
-    expect(body.previousSaleschannelCustomerJwt).toBe('old-jwt');
+    expect(customer.customerPayload).toBeUndefined();
+    expect(customer.previousSaleschannelCustomerJwt).toBe('old-jwt');
   });
 
   it('mints a customer token for logged-in sessions', async () => {
@@ -74,16 +78,13 @@ describe('tecsafe token (e2e)', () => {
       .send({ oldToken: 'guest-jwt' })
       .expect(200);
 
-    const exchangeCall = fetchMock.mock.calls.find(([url]) =>
-      (url as string).endsWith('/saleschannel-customer'),
-    ) as [string, { body: string }] | undefined;
-    const body = JSON.parse(exchangeCall![1].body) as {
+    const customer = JSON.parse(formOf(customerCall()!).ofcp_customer) as {
       customerPayload: { saleschannelCustomerEmail: string };
       previousSaleschannelCustomerJwt?: string;
     };
-    expect(body.customerPayload.saleschannelCustomerEmail).toBe(
+    expect(customer.customerPayload.saleschannelCustomerEmail).toBe(
       'token@example.com',
     );
-    expect(body.previousSaleschannelCustomerJwt).toBe('guest-jwt');
+    expect(customer.previousSaleschannelCustomerJwt).toBe('guest-jwt');
   });
 });

@@ -3,8 +3,11 @@ import { ConfigService } from './config.service';
 const KEYS = [
   'PORT',
   'DATA_DIR',
-  'OFCP_GATEWAY_URL',
-  'OFCP_SALESCHANNEL_API_KEY',
+  'OFCP_TOKEN_URL',
+  'OFCP_SERVICE_ACCOUNT',
+  'OFCP_SERVICE_ACCOUNT_TOKEN',
+  'OFCP_SALESCHANNEL_CLIENT_ID',
+  'OFCP_CUSTOMER_CLIENT_ID',
   'GUEST_SESSION_TTL_DAYS',
   'SESSION_TTL_DAYS',
   'USER_TTL_DAYS',
@@ -45,9 +48,26 @@ describe('ConfigService', () => {
     expect(new ConfigService().DATA_DIR).toBe('/srv/ofcp-demo');
   });
 
-  it('strips trailing slashes from the gateway URL', () => {
-    process.env.OFCP_GATEWAY_URL = 'https://gateway.test///';
-    expect(new ConfigService().OFCP_GATEWAY_URL).toBe('https://gateway.test');
+  it('returns the Authentik token URL verbatim (it is the full endpoint, not a base)', () => {
+    process.env.OFCP_TOKEN_URL = 'https://auth.test/application/o/token/';
+    expect(new ConfigService().OFCP_TOKEN_URL).toBe(
+      'https://auth.test/application/o/token/',
+    );
+  });
+
+  it('has no code default for the token URL or the shop credentials', () => {
+    process.env.PORT = '4000';
+    for (const key of [
+      'OFCP_TOKEN_URL',
+      'OFCP_SERVICE_ACCOUNT',
+      'OFCP_SERVICE_ACCOUNT_TOKEN',
+      'OFCP_SALESCHANNEL_CLIENT_ID',
+      'OFCP_CUSTOMER_CLIENT_ID',
+    ]) {
+      for (const k of KEYS) if (k.startsWith('OFCP_')) process.env[k] = 'x';
+      delete process.env[key];
+      expect(() => new ConfigService().validate()).toThrow(key);
+    }
   });
 
   it('parses required positive numbers', () => {
@@ -67,7 +87,7 @@ describe('ConfigService', () => {
 
   it('returns undefined for unset or empty optional secrets', () => {
     expect(new ConfigService().WHITELABEL_SHARE_SECRET).toBeUndefined();
-    expect(new ConfigService().OFCP_SALESCHANNEL_API_KEY).toBeUndefined();
+    expect(new ConfigService().OFCP_SERVICE_ACCOUNT_TOKEN).toBeUndefined();
     process.env.WHITELABEL_SHARE_SECRET = '';
     expect(new ConfigService().WHITELABEL_SHARE_SECRET).toBeUndefined();
   });
