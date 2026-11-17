@@ -391,12 +391,12 @@ no patched npm release is available:
   by the Nuxt/i18n build tooling with repository-controlled patterns. The demo
   does not accept user-supplied glob patterns. `braces@3.0.3` is the latest
   published version; the audit's suggested `3.0.4` is not published.
-- [GHSA-86w9-cpqp-85rv (node-forge)](https://github.com/advisories/GHSA-86w9-cpqp-85rv):
-  RSA PKCS#1 v1.5 signature verification can accept malformed ASN.1 data.
-  This dependency comes from listhen's local HTTPS certificate tooling;
-  the demo does not use it to verify uploaded certificates or signatures.
-  `node-forge@1.4.0` is the latest published release; the audit's suggested
-  `1.4.1` is not published.
+- [GHSA-fc5q-39xc-vjpf (picomatch)](https://github.com/advisories/GHSA-fc5q-39xc-vjpf):
+  single-branch repeated extglobs can cause catastrophic backtracking (ReDoS).
+  The dependency is reached through `@intlify/unplugin-vue-i18n`'s Rollup
+  helpers, which match repository-controlled include/exclude patterns at build
+  time; the demo never matches user input against globs. `picomatch@4.0.7` is
+  the latest published release and is itself affected.
 
 Remove an exception when a patched release can be installed. Reassess it
 before exposing the affected glob or certificate functionality to user input.
