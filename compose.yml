@@ -4,10 +4,15 @@ services:
     ports:
       - "8080:80"
     environment:
-      OFCP_GATEWAY_URL: ${OFCP_GATEWAY_URL:-https://ofcp-api-gateway.staging.tecsafe.de}
+      # Token endpoint of TECSAFE's Authentik; the shared one serves testing, staging and production.
+      OFCP_TOKEN_URL: ${OFCP_TOKEN_URL:-https://auth.tec-digital.de/application/o/token/}
       NUXT_PUBLIC_WIDGET_BASE_URL: ${NUXT_PUBLIC_WIDGET_BASE_URL:-https://app-ui.tecsafe.de/iframe}
       NUXT_PUBLIC_EDITOR_URL: ${NUXT_PUBLIC_EDITOR_URL:-https://ofcp-editor.staging.tecsafe.de}
-      OFCP_SALESCHANNEL_API_KEY: ${OFCP_SALESCHANNEL_API_KEY:-tds_sc_eshop_dev_key}
+      # Issued once per saleschannel and stage in the TECSAFE cockpit (Saleschannel → Credentials); no defaults.
+      OFCP_SERVICE_ACCOUNT: ${OFCP_SERVICE_ACCOUNT:-}
+      OFCP_SERVICE_ACCOUNT_TOKEN: ${OFCP_SERVICE_ACCOUNT_TOKEN:-}
+      OFCP_SALESCHANNEL_CLIENT_ID: ${OFCP_SALESCHANNEL_CLIENT_ID:-}
+      OFCP_CUSTOMER_CLIENT_ID: ${OFCP_CUSTOMER_CLIENT_ID:-}
       WHITELABEL_SHARE_SECRET: ${WHITELABEL_SHARE_SECRET:-}
       DUMMY_ITEM_START_PRICE: ${DUMMY_ITEM_START_PRICE:-1}
       DUMMY_ITEM_INCREASE_PERCENT: ${DUMMY_ITEM_INCREASE_PERCENT:-5}

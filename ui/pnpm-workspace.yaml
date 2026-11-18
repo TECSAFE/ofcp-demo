@@ -44,6 +44,9 @@ overrides:
   devalue@<=5.9.2: ^5.9.3
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
   nanoid@<3.3.18: ^3.3.18
+  node-forge@<1.4.3: ^1.4.3
+  glob@>=9.0.0 <14.0.2: ^14.0.2
+  minimatch@>=7.0.0 <11.0.1: ^11.0.1
   nuxt@>=4.0.0 <4.5.1: ^4.5.1
   nuxt@>=4.4.0 <=4.5.0: ^4.5.1
   nuxt@>=4.4.7 <4.5.1: ^4.5.1
@@ -61,6 +64,5 @@ auditConfig:
   ignoreGhsas:
     # No published fix; only trusted build-time globs are used. See README.
     - GHSA-vfj7-8cjw-p6xm
-    # No published fix; listhen uses forge for local HTTPS certificates, not
-    # verification of untrusted signatures. See README.
-    - GHSA-86w9-cpqp-85rv
+    # No published fix; build-time globs from @nuxtjs/i18n's Vite plugin only. See README.
+    - GHSA-fc5q-39xc-vjpf

@@ -15,9 +15,6 @@ export default defineNuxtConfig({
     // @intlify/unplugin-vue-i18n both transform lazy locale files, producing a
     // JSON.parse() over precompiled JS. Importing the catalogs as messages
     // sidesteps that double-transform.
-    bundle: {
-      optimizeTranslationDirective: false,
-    },
     locales: [
       { code: 'de', language: 'de-DE', name: 'Deutsch' },
       { code: 'en', language: 'en-US', name: 'English' },
@@ -30,6 +27,8 @@ export default defineNuxtConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    // The OFCP stack serves the dev server behind Traefik; Vite rejects unknown hosts otherwise.
+    server: { allowedHosts: ['.tecsafe-local.de'] },
   },
   runtimeConfig: {
     public: {
